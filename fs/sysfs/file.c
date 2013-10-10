@@ -162,8 +162,10 @@ fill_write_buffer(struct sysfs_buffer * buffer, const char __user * buf, size_t 
 
 	if (!buffer->page)
 		buffer->page = (char *)get_zeroed_page(GFP_KERNEL);
-	if (!buffer->page)
+	if (!buffer->page) {
+		printk(KERN_CRIT "[Debug] failed to execute get_zeroed_page \n");
 		return -ENOMEM;
+	}
 
 	if (count >= PAGE_SIZE)
 		count = PAGE_SIZE - 1;

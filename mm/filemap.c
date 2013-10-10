@@ -1650,13 +1650,21 @@ int filemap_fault(struct vm_area_struct *vma, struct vm_fault *vmf)
 	 * Do we have something in the page cache already?
 	 */
 	page = find_get_page(mapping, offset);
+#ifdef CONFIG_ZSWAP
+	if (likely(page) && !(vmf->flags & FAULT_FLAG_TRIED)) {
+#else
 	if (likely(page)) {
+#endif
 		/*
 		 * We found the page, so try async readahead before
 		 * waiting for the lock.
 		 */
 		do_async_mmap_readahead(vma, ra, file, page, offset);
+#ifdef CONFIG_ZSWAP
+	} else if (!page) {
+#else
 	} else {
+#endif
 		/* No page in the page cache at all */
 		do_sync_mmap_readahead(vma, ra, file, offset);
 		count_vm_event(PGMAJFAULT);
@@ -2343,9 +2351,17 @@ repeat:
 	if (page)
 		goto found;
 
+retry:
 	page = __page_cache_alloc(gfp_mask & ~gfp_notmask);
 	if (!page)
 		return NULL;
+
+	if (is_cma_pageblock(page)) {
+		__free_page(page);
+		gfp_notmask |= __GFP_MOVABLE;
+		goto retry;
+	}
+
 	status = add_to_page_cache_lru(page, mapping, index,
 						GFP_KERNEL & ~gfp_notmask);
 	if (unlikely(status)) {

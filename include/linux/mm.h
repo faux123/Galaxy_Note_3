@@ -31,6 +31,9 @@ extern unsigned long max_mapnr;
 
 extern unsigned long num_physpages;
 extern unsigned long totalram_pages;
+#ifdef CONFIG_FIX_MOVABLE_ZONE
+extern unsigned long total_unmovable_pages;
+#endif
 extern void * high_memory;
 extern int page_cluster;
 
@@ -157,6 +160,9 @@ extern pgprot_t protection_map[16];
 #define FAULT_FLAG_ALLOW_RETRY	0x08	/* Retry fault if blocking */
 #define FAULT_FLAG_RETRY_NOWAIT	0x10	/* Don't drop mmap_sem and wait when retrying */
 #define FAULT_FLAG_KILLABLE	0x20	/* The fault task is in SIGKILL killable region */
+#ifdef CONFIG_ZSWAP
+#define FAULT_FLAG_TRIED	0x40	/* second try */
+#endif
 
 /*
  * This interface is used by x86 PAT code to identify a pfn mapping that is
@@ -873,6 +879,7 @@ extern bool skip_free_areas_node(unsigned int flags, int nid);
 
 int shmem_lock(struct file *file, int lock, struct user_struct *user);
 struct file *shmem_file_setup(const char *name, loff_t size, unsigned long flags);
+void shmem_set_file(struct vm_area_struct *vma, struct file *file);
 int shmem_zero_setup(struct vm_area_struct *);
 
 extern int can_do_mlock(void);
@@ -1507,6 +1514,8 @@ int vm_insert_pfn(struct vm_area_struct *vma, unsigned long addr,
 			unsigned long pfn);
 int vm_insert_mixed(struct vm_area_struct *vma, unsigned long addr,
 			unsigned long pfn);
+int vm_iomap_memory(struct vm_area_struct *vma, phys_addr_t start, unsigned long len);
+
 
 struct page *follow_page(struct vm_area_struct *, unsigned long address,
 			unsigned int foll_flags);
@@ -1556,6 +1565,32 @@ int in_gate_area(struct mm_struct *mm, unsigned long addr);
 int in_gate_area_no_mm(unsigned long addr);
 #define in_gate_area(mm, addr) ({(void)mm; in_gate_area_no_mm(addr);})
 #endif	/* __HAVE_ARCH_GATE_AREA */
+
+#ifdef CONFIG_USE_USER_ACCESSIBLE_TIMERS
+static inline int use_user_accessible_timers(void) { return 1; }
+extern int in_user_timers_area(struct mm_struct *mm, unsigned long addr);
+extern struct vm_area_struct *get_user_timers_vma(struct mm_struct *mm);
+extern int get_user_timer_page(struct vm_area_struct *vma,
+	struct mm_struct *mm, unsigned long start, unsigned int gup_flags,
+	struct page **pages, int idx, int *goto_next_page);
+#else
+static inline int use_user_accessible_timers(void) { return 0; }
+static inline int in_user_timers_area(struct mm_struct *mm, unsigned long addr)
+{
+	return 0;
+}
+static inline struct vm_area_struct *get_user_timers_vma(struct mm_struct *mm)
+{
+	return NULL;
+}
+static inline int get_user_timer_page(struct vm_area_struct *vma,
+	struct mm_struct *mm, unsigned long start, unsigned int gup_flags,
+	struct page **pages, int idx, int *goto_next_page)
+{
+	*goto_next_page = 0;
+	return 0;
+}
+#endif
 
 int drop_caches_sysctl_handler(struct ctl_table *, int,
 					void __user *, size_t *, loff_t *);

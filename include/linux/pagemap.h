@@ -205,7 +205,18 @@ extern struct page *__page_cache_alloc(gfp_t gfp);
 #else
 static inline struct page *__page_cache_alloc(gfp_t gfp)
 {
-	return alloc_pages(gfp, 0);
+	struct page *page;
+
+	page = alloc_pages(gfp, 0);
+
+#ifdef CONFIG_CMA
+	if (page && is_cma_pageblock(page)) {
+		__free_page(page);
+		page = alloc_pages(gfp & ~__GFP_MOVABLE, 0);
+	}
+#endif
+
+	return page;
 }
 #endif
 
