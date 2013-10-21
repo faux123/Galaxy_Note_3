@@ -929,7 +929,7 @@ void max77803_muic_send_event(int val)
 }
 #endif
 
-extern int system_rev;
+extern unsigned int system_rev;
 static int max77803_muic_set_charging_type(struct max77803_muic_info *info,
 					   bool force_disable)
 {
