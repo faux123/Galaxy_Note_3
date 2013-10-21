@@ -362,7 +362,6 @@ extern u32 hwpoison_filter_enable;
 #define ALLOC_HIGH		0x20 /* __GFP_HIGH set */
 #define ALLOC_CPUSET		0x40 /* check for correct cpuset */
 #define ALLOC_CMA		0x80 /* allow allocations from CMA areas */
-#define ALLOC_PFMEMALLOC       0x100 /* Caller has PF_MEMALLOC set */
 
 /*
  * Unnecessary readahead harms performance, especially for SSD devices, where
