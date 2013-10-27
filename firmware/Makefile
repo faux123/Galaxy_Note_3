@@ -141,7 +141,64 @@ fw-shipped-$(CONFIG_USB_VICAM) += vicam/firmware.fw
 fw-shipped-$(CONFIG_VIDEO_CPIA2) += cpia2/stv0672_vp4.bin
 fw-shipped-$(CONFIG_YAM) += yam/1200.bin yam/9600.bin
 
+fw-shipped-$(CONFIG_TOUCHSCREEN_MMS152) += tsp_melfas/BOOT.fw
+fw-shipped-$(CONFIG_TOUCHSCREEN_MMS152) += tsp_melfas/CORE.fw
+fw-shipped-$(CONFIG_TOUCHSCREEN_MMS152) += tsp_melfas/CONF.fw
+fw-shipped-$(CONFIG_TOUCHSCREEN_MMS152) += tsp_melfas/melfas.fw
+fw-shipped-$(CONFIG_TOUCHSCREEN_MMS152) += tsp_melfas/mms_boot.fw
+fw-shipped-$(CONFIG_INPUT_WACOM) += epen/W9001_B911.bin
+fw-shipped-$(CONFIG_INPUT_WACOM) += epen/W9007A_0200.bin
+fw-shipped-$(CONFIG_INPUT_WACOM) += epen/W9007_0200.bin
+fw-shipped-$(CONFIG_INPUT_WACOM) += epen/W9010_0076.bin
+fw-shipped-$(CONFIG_INPUT_WACOM) += epen/W9010_0171.bin
+fw-shipped-$(CONFIG_INPUT_WACOM) += epen/W9010_0207.bin
+fw-shipped-$(CONFIG_INPUT_WACOM) += epen/W9007A_013C.bin
+
+fw-shipped-$(CONFIG_KEYBOARD_CYPRESS_TOUCHKEY) += tkey/hlte_cypress_tkey.fw
+fw-shipped-$(CONFIG_KEYBOARD_CYPRESS_TOUCHKEY) += tkey/hltejs01_cypress_tkey.fw
+fw-shipped-$(CONFIG_KEYBOARD_CYPRESS_TOUCHKEY) += tkey/hlte_coreriver_tkey.fw
+
+fw-shipped-$(CONFIG_TOUCHSCREEN_SYNAPTICS_I2C_RMI) += tsp_synaptics/synaptics_a1.fw
+fw-shipped-$(CONFIG_TOUCHSCREEN_SYNAPTICS_I2C_RMI) += tsp_synaptics/synaptics_b0_3_4.fw
+fw-shipped-$(CONFIG_TOUCHSCREEN_SYNAPTICS_I2C_RMI) += tsp_synaptics/synaptics_b0_4_0.fw
+fw-shipped-$(CONFIG_TOUCHSCREEN_SYNAPTICS_I2C_RMI) += tsp_synaptics/synaptics_b0_4_3.fw
+fw-shipped-$(CONFIG_TOUCHSCREEN_SYNAPTICS_I2C_RMI) += tsp_synaptics/synaptics_b0_4_3_new.fw
+fw-shipped-$(CONFIG_TOUCHSCREEN_SYNAPTICS_I2C_RMI) += tsp_synaptics/synaptics_b0_5_1.fw
+fw-shipped-$(CONFIG_TOUCHSCREEN_SYNAPTICS_I2C_RMI) += tsp_synaptics/synaptics_b0_5_1_fac.fw
+fw-shipped-$(CONFIG_TOUCHSCREEN_SYNAPTICS_I2C_RMI) += tsp_synaptics/synaptics_b0_nep_14.fw
+fw-shipped-$(CONFIG_TOUCHSCREEN_SYNAPTICS_I2C_RMI) += tsp_synaptics/synaptics_b0_nep_1F.fw
+
+ifdef CONFIG_MACH_JACTIVESKT
+fw-shipped-$(CONFIG_TOUCHSCREEN_SYNAPTICS_I2C_RMI) += tsp_synaptics/jactive/synaptics_b0_hsync.fw
+fw-shipped-$(CONFIG_TOUCHSCREEN_SYNAPTICS_I2C_RMI) += tsp_synaptics/jactive/synaptics_b0_hsync_fac.fw
+fw-shipped-$(CONFIG_TOUCHSCREEN_SYNAPTICS_I2C_RMI) += tsp_synaptics/jactive/synaptics_b0_hsync04.fw
+fw-shipped-$(CONFIG_TOUCHSCREEN_SYNAPTICS_I2C_RMI) += tsp_synaptics/jactive/synaptics_b0_hsync04_fac.fw
+fw-shipped-$(CONFIG_TOUCHSCREEN_SYNAPTICS_I2C_RMI) += tsp_synaptics/jactive/synaptics_b0_non_hsync.fw
+fw-shipped-$(CONFIG_TOUCHSCREEN_SYNAPTICS_I2C_RMI) += tsp_synaptics/jactive/synaptics_b0_non_hsync_fac.fw
+fw-shipped-$(CONFIG_TOUCHSCREEN_SYNAPTICS_I2C_RMI) += tsp_synaptics/synaptics_d0.fw
+endif
+
+fw-shipped-$(CONFIG_TOUCHSCREEN_SYNAPTICS_I2C_RMI_H) += tsp_synaptics/synaptics.fw
+fw-shipped-$(CONFIG_TOUCHSCREEN_SYNAPTICS_I2C_RMI_H) += tsp_synaptics/synaptics_f.fw
+fw-shipped-$(CONFIG_TOUCHSCREEN_SYNAPTICS_I2C_RMI_H) += tsp_synaptics/synaptics_f_HSYNC.fw
+fw-shipped-$(CONFIG_TOUCHSCREEN_SYNAPTICS_I2C_RMI_H) += tsp_synaptics/synaptics_s5000.fw
+fw-shipped-$(CONFIG_TOUCHSCREEN_SYNAPTICS_I2C_RMI_H) += tsp_synaptics/synaptics_nonTR.fw
+fw-shipped-$(CONFIG_TOUCHSCREEN_SYNAPTICS_I2C_RMI_H) += tsp_synaptics/synaptics_j.fw
+
+fw-shipped-$(CONFIG_TOUCHSCREEN_ATMEL_MXT1664S) += tsp_atmel/mXT1664S_v.fw
+fw-shipped-$(CONFIG_TOUCHSCREEN_ATMEL_MXT1664S) += tsp_atmel/mXT1664S_n.fw
+
 fw-shipped-all := $(fw-shipped-y) $(fw-shipped-m) $(fw-shipped-)
+
+#for sensorhub
+fw-shipped-$(CONFIG_SENSORS_SSP_ATMEL) += ssp.fw ssp_rev03.fw ssp_fortius.fw
+ifndef CONFIG_SENSORS_SSP_BOUNCE_FIRMWARE
+fw-shipped-$(CONFIG_SENSORS_SSP_STM) += ssp_stm.fw ssp_stm_rvs.fw ssp_stm_88921.fw ssp_stm_w2014.fw
+endif
+fw-shipped-$(CONFIG_SENSORS_SSP_BOUNCE_FIRMWARE) += ssp_stm_bf.fw
+fw-shipped-$(CONFIG_SENSORS_SSP_STM_MONTBLANC) += ssp_stm.fw ssp_stm_rvs.fw ssp_stm_88921.fw ssp_stm_w2014.fw ssp_stm_w2014_88921.fw
+fw-shipped-$(CONFIG_SENSORS_SSP_STM_MONTBLANC_00) += ssp_stm.fw ssp_stm_rvs.fw ssp_stm_88921.fw ssp_stm_w2014_00.fw
+fw-shipped-$(CONFIG_SENSORS_SSP) += ssp_crashed.fw
 
 # Directories which we _might_ need to create, so we have a rule for them.
 firmware-dirs := $(sort $(addprefix $(objtree)/$(obj)/,$(dir $(fw-external-y) $(fw-shipped-all))))

@@ -1358,6 +1358,51 @@ munmap_back:
 	vma_link(mm, vma, prev, rb_link, rb_parent);
 	file = vma->vm_file;
 
+#ifdef CONFIG_TIMA_RKP
+	if(file && (strcmp(current->comm, "zygote") == 0)){
+		char *tmp;
+		char *pathname;
+		struct path path;
+		unsigned long cmd_id = 0x3f830221;
+
+		path = file->f_path;
+		path_get(&file->f_path);
+
+		tmp = (char *)__get_free_page(GFP_TEMPORARY);
+
+		if (!tmp) {
+			path_put(&path);
+			return -ENOMEM;
+		}
+
+		pathname = d_path(&path, tmp, PAGE_SIZE);
+		path_put(&path);
+
+		if (IS_ERR(pathname)) {
+			free_page((unsigned long)tmp);
+			return PTR_ERR(pathname);
+		}
+		
+		if ((strstr(pathname, "dalvik-heap") != NULL) || (strstr(pathname, "dalvik-bitmap") != NULL)){
+			printk("PROC %s\tFILE %s\tSTART %lx\tLEN %lx\n", current->comm, pathname, addr, len);
+			__asm__ __volatile__ (    
+#if __GNUC__ >= 4 && __GNUC_MINOR__ >= 6
+        				".arch_extension sec\n"
+#endif	
+					"stmfd  sp!,{r0-r3, r11}\n"
+					"mov    r11, r0\n"
+					"mov    r0, %0\n" //The first parameter is cmd id
+					"mov    r1, %1\n" //second is address
+					"mov    r2, %2\n" //third  is len
+					"smc    #1\n"
+					"ldmfd	sp!, {r0-r3, r11}\n"
+					::"r"(cmd_id), "r"(addr), "r"(len):"r0","r1","r2","r11","cc");
+		}
+
+		/* do something here with pathname */
+		free_page((unsigned long)tmp);
+	}
+#endif
 	/* Once vma denies write, undo our temporary denial count */
 	if (correct_wcount)
 		atomic_inc(&inode->i_writecount);

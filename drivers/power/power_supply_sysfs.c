@@ -51,11 +51,11 @@ static ssize_t power_supply_show_property(struct device *dev,
 		"Unknown", "Charging", "Discharging", "Not charging", "Full"
 	};
 	static char *charge_type[] = {
-		"Unknown", "N/A", "Trickle", "Fast"
+		"Unknown", "N/A", "Trickle", "Fast", "Slow"
 	};
 	static char *health_text[] = {
 		"Unknown", "Good", "Overheat", "Dead", "Over voltage",
-		"Unspecified failure", "Cold",
+		"Unspecified failure", "Cold", "UnderVoltage",
 	};
 	static char *technology_text[] = {
 		"Unknown", "NiMH", "Li-ion", "Li-poly", "LiFe", "NiCd",
@@ -138,6 +138,7 @@ static struct device_attribute power_supply_attrs[] = {
 	POWER_SUPPLY_ATTR(health),
 	POWER_SUPPLY_ATTR(present),
 	POWER_SUPPLY_ATTR(online),
+	POWER_SUPPLY_ATTR(charging_enabled),
 	POWER_SUPPLY_ATTR(technology),
 	POWER_SUPPLY_ATTR(cycle_count),
 	POWER_SUPPLY_ATTR(voltage_max),
@@ -158,6 +159,7 @@ static struct device_attribute power_supply_attrs[] = {
 	POWER_SUPPLY_ATTR(charge_now),
 	POWER_SUPPLY_ATTR(charge_avg),
 	POWER_SUPPLY_ATTR(charge_counter),
+	POWER_SUPPLY_ATTR(charge_counter_shadow),
 	POWER_SUPPLY_ATTR(energy_full_design),
 	POWER_SUPPLY_ATTR(energy_empty_design),
 	POWER_SUPPLY_ATTR(energy_full),
@@ -174,6 +176,8 @@ static struct device_attribute power_supply_attrs[] = {
 	POWER_SUPPLY_ATTR(time_to_full_avg),
 	POWER_SUPPLY_ATTR(type),
 	POWER_SUPPLY_ATTR(scope),
+	POWER_SUPPLY_ATTR(system_temp_level),
+	POWER_SUPPLY_ATTR(resistance),
 	/* Properties of type `const char *' */
 	POWER_SUPPLY_ATTR(model_name),
 	POWER_SUPPLY_ATTR(manufacturer),

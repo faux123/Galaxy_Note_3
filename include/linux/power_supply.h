@@ -13,6 +13,7 @@
 #ifndef __LINUX_POWER_SUPPLY_H__
 #define __LINUX_POWER_SUPPLY_H__
 
+#include <linux/wakelock.h>
 #include <linux/workqueue.h>
 #include <linux/leds.h>
 
@@ -44,6 +45,7 @@ enum {
 	POWER_SUPPLY_CHARGE_TYPE_NONE,
 	POWER_SUPPLY_CHARGE_TYPE_TRICKLE,
 	POWER_SUPPLY_CHARGE_TYPE_FAST,
+	POWER_SUPPLY_CHARGE_TYPE_SLOW,
 };
 
 enum {
@@ -54,6 +56,7 @@ enum {
 	POWER_SUPPLY_HEALTH_OVERVOLTAGE,
 	POWER_SUPPLY_HEALTH_UNSPEC_FAILURE,
 	POWER_SUPPLY_HEALTH_COLD,
+	POWER_SUPPLY_HEALTH_UNDERVOLTAGE,
 };
 
 enum {
@@ -88,6 +91,7 @@ enum power_supply_property {
 	POWER_SUPPLY_PROP_HEALTH,
 	POWER_SUPPLY_PROP_PRESENT,
 	POWER_SUPPLY_PROP_ONLINE,
+	POWER_SUPPLY_PROP_CHARGING_ENABLED,
 	POWER_SUPPLY_PROP_TECHNOLOGY,
 	POWER_SUPPLY_PROP_CYCLE_COUNT,
 	POWER_SUPPLY_PROP_VOLTAGE_MAX,
@@ -108,6 +112,7 @@ enum power_supply_property {
 	POWER_SUPPLY_PROP_CHARGE_NOW,
 	POWER_SUPPLY_PROP_CHARGE_AVG,
 	POWER_SUPPLY_PROP_CHARGE_COUNTER,
+	POWER_SUPPLY_PROP_CHARGE_COUNTER_SHADOW,
 	POWER_SUPPLY_PROP_ENERGY_FULL_DESIGN,
 	POWER_SUPPLY_PROP_ENERGY_EMPTY_DESIGN,
 	POWER_SUPPLY_PROP_ENERGY_FULL,
@@ -124,6 +129,8 @@ enum power_supply_property {
 	POWER_SUPPLY_PROP_TIME_TO_FULL_AVG,
 	POWER_SUPPLY_PROP_TYPE, /* use power_supply.type instead */
 	POWER_SUPPLY_PROP_SCOPE,
+	POWER_SUPPLY_PROP_SYSTEM_TEMP_LEVEL,
+	POWER_SUPPLY_PROP_RESISTANCE,
 	/* Properties of type `const char *' */
 	POWER_SUPPLY_PROP_MODEL_NAME,
 	POWER_SUPPLY_PROP_MANUFACTURER,
@@ -139,7 +146,51 @@ enum power_supply_type {
 	POWER_SUPPLY_TYPE_USB_DCP,	/* Dedicated Charging Port */
 	POWER_SUPPLY_TYPE_USB_CDP,	/* Charging Downstream Port */
 	POWER_SUPPLY_TYPE_USB_ACA,	/* Accessory Charger Adapters */
+	POWER_SUPPLY_TYPE_MISC,
+	POWER_SUPPLY_TYPE_CARDOCK,
+	POWER_SUPPLY_TYPE_WIRELESS,
+	POWER_SUPPLY_TYPE_UARTOFF,
+	POWER_SUPPLY_TYPE_OTG,
+	POWER_SUPPLY_TYPE_BMS,
 };
+
+/*
+ * EXTENDED_ONLINE_TYPE
+ * - support various charger cable type
+ * - set type from each accessory driver(muic, host, mhl, etc,,,)
+ *
+ * - type format
+ * | 31-24: RSVD | 23-16: MAIN TYPE | 15-8: SUB TYPE | 7-0: POWER TYPE |
+ */
+#define ONLINE_TYPE_RSVD_SHIFT	24
+#define ONLINE_TYPE_RSVD_MASK	(0xF << ONLINE_TYPE_RSVD_SHIFT)
+#define ONLINE_TYPE_MAIN_SHIFT	16
+#define ONLINE_TYPE_MAIN_MASK	(0xF << ONLINE_TYPE_MAIN_SHIFT)
+#define ONLINE_TYPE_SUB_SHIFT	8
+#define ONLINE_TYPE_SUB_MASK	(0xF << ONLINE_TYPE_SUB_SHIFT)
+#define ONLINE_TYPE_PWR_SHIFT	0
+#define ONLINE_TYPE_PWR_MASK	(0xF << ONLINE_TYPE_PWR_SHIFT)
+
+enum online_sub_type {
+	ONLINE_SUB_TYPE_UNKNOWN	= 0,
+	ONLINE_SUB_TYPE_MHL,
+	ONLINE_SUB_TYPE_AUDIO,
+	ONLINE_SUB_TYPE_DESK,
+	ONLINE_SUB_TYPE_SMART_NOTG,
+	ONLINE_SUB_TYPE_SMART_OTG,
+	ONLINE_SUB_TYPE_KBD,
+};
+
+enum online_power_type {
+	ONLINE_POWER_TYPE_UNKNOWN = 0,
+	ONLINE_POWER_TYPE_BATTERY,
+	ONLINE_POWER_TYPE_TA,
+	ONLINE_POWER_TYPE_USB,
+	ONLINE_POWER_TYPE_MHL_500,
+	ONLINE_POWER_TYPE_MHL_900,
+	ONLINE_POWER_TYPE_MHL_1500,
+};
+/* EXTENDED_ONLINE_TYPE */
 
 union power_supply_propval {
 	int intval;
@@ -172,6 +223,9 @@ struct power_supply {
 	/* private */
 	struct device *dev;
 	struct work_struct changed_work;
+	spinlock_t changed_lock;
+	bool changed;
+	struct wake_lock work_wake_lock;
 
 #ifdef CONFIG_LEDS_TRIGGERS
 	struct led_trigger *charging_full_trig;
@@ -206,21 +260,58 @@ struct power_supply_info {
 	int use_for_apm;
 };
 
+#if defined(CONFIG_POWER_SUPPLY) || defined(CONFIG_POWER_SUPPLY_MODULE)
 extern struct power_supply *power_supply_get_by_name(char *name);
 extern void power_supply_changed(struct power_supply *psy);
 extern int power_supply_am_i_supplied(struct power_supply *psy);
 extern int power_supply_set_battery_charged(struct power_supply *psy);
-
-#if defined(CONFIG_POWER_SUPPLY) || defined(CONFIG_POWER_SUPPLY_MODULE)
+extern int power_supply_set_current_limit(struct power_supply *psy, int limit);
+extern int power_supply_set_online(struct power_supply *psy, bool enable);
+extern int power_supply_set_present(struct power_supply *psy, bool enable);
+extern int power_supply_set_scope(struct power_supply *psy, int scope);
+extern int power_supply_set_charge_type(struct power_supply *psy, int type);
+extern int power_supply_set_supply_type(struct power_supply *psy,
+					enum power_supply_type supply_type);
 extern int power_supply_is_system_supplied(void);
-#else
-static inline int power_supply_is_system_supplied(void) { return -ENOSYS; }
-#endif
-
 extern int power_supply_register(struct device *parent,
 				 struct power_supply *psy);
 extern void power_supply_unregister(struct power_supply *psy);
 extern int power_supply_powers(struct power_supply *psy, struct device *dev);
+#else
+static inline struct power_supply *power_supply_get_by_name(char *name)
+							{ return NULL; }
+static inline void power_supply_changed(struct power_supply *psy) { }
+static inline int power_supply_am_i_supplied(struct power_supply *psy)
+							{ return -ENOSYS; }
+static inline int power_supply_set_battery_charged(struct power_supply *psy)
+							{ return -ENOSYS; }
+static inline int power_supply_set_current_limit(struct power_supply *psy,
+							int limit)
+							{ return -ENOSYS; }
+static inline int power_supply_set_online(struct power_supply *psy,
+							bool enable)
+							{ return -ENOSYS; }
+static inline int power_supply_set_present(struct power_supply *psy,
+							bool enable)
+							{ return -ENOSYS; }
+static inline int power_supply_set_scope(struct power_supply *psy,
+							int scope)
+							{ return -ENOSYS; }
+static inline int power_supply_set_charge_type(struct power_supply *psy,
+							int type)
+							{ return -ENOSYS; }
+static inline int power_supply_set_supply_type(struct power_supply *psy,
+					enum power_supply_type supply_type)
+							{ return -ENOSYS; }
+static inline int power_supply_is_system_supplied(void) { return -ENOSYS; }
+static inline int power_supply_register(struct device *parent,
+					struct power_supply *psy)
+							{ return -ENOSYS; }
+static inline void power_supply_unregister(struct power_supply *psy) { }
+static inline int power_supply_powers(struct power_supply *psy,
+				      struct device *dev)
+							{ return -ENOSYS; }
+#endif
 
 /* For APM emulation, think legacy userspace. */
 extern struct class *power_supply_class;
@@ -235,6 +326,7 @@ static inline bool power_supply_is_amp_property(enum power_supply_property psp)
 	case POWER_SUPPLY_PROP_CHARGE_NOW:
 	case POWER_SUPPLY_PROP_CHARGE_AVG:
 	case POWER_SUPPLY_PROP_CHARGE_COUNTER:
+	case POWER_SUPPLY_PROP_CHARGE_COUNTER_SHADOW:
 	case POWER_SUPPLY_PROP_CURRENT_MAX:
 	case POWER_SUPPLY_PROP_CURRENT_NOW:
 	case POWER_SUPPLY_PROP_CURRENT_AVG:

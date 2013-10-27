@@ -79,6 +79,10 @@
 #include <asm/smp.h>
 #endif
 
+#ifdef CONFIG_SEC_GPIO_DVS
+#include <linux/secgpio_dvs.h>
+#endif
+
 static int kernel_init(void *);
 
 extern void init_IRQ(void);
@@ -107,6 +111,10 @@ bool early_boot_irqs_disabled __read_mostly;
 enum system_states system_state __read_mostly;
 EXPORT_SYMBOL(system_state);
 
+#ifdef CONFIG_SAMSUNG_LPM_MODE
+int poweroff_charging;
+#endif /*   CONFIG_SAMSUNG_LPM_MODE */
+int recovery_mode;
 /*
  * Boot command-line arguments
  */
@@ -224,6 +232,21 @@ static int __init loglevel(char *str)
 }
 
 early_param("loglevel", loglevel);
+
+/*batt_id_value */
+int console_batt_stat;
+static int __init battStatus(char *str)
+{
+	int batt_val;  
+	
+	if (get_option(&str, &batt_val)) {
+		console_batt_stat = batt_val;
+		return 0;
+	}
+
+	return -EINVAL;
+}
+early_param("batt_id_value", battStatus);
 
 /* Change NUL term back to "=", to make "param" the whole string. */
 static int __init repair_env_string(char *param, char *val)
@@ -359,6 +382,7 @@ static __initdata DECLARE_COMPLETION(kthreadd_done);
 static noinline void __init_refok rest_init(void)
 {
 	int pid;
+	const struct sched_param param = { .sched_priority = 1 };
 
 	rcu_scheduler_starting();
 	/*
@@ -372,6 +396,7 @@ static noinline void __init_refok rest_init(void)
 	rcu_read_lock();
 	kthreadd_task = find_task_by_pid_ns(pid, &init_pid_ns);
 	rcu_read_unlock();
+	sched_setscheduler_nocheck(kthreadd_task, SCHED_FIFO, &param);
 	complete(&kthreadd_done);
 
 	/*
@@ -400,6 +425,18 @@ static int __init do_early_param(char *param, char *val)
 		}
 	}
 	/* We accept everything at this stage. */
+#ifdef CONFIG_SAMSUNG_LPM_MODE
+	/*   check power off charging */
+	if ((strncmp(param, "androidboot.bootchg", 19) == 0)) {
+		if (strncmp(val, "true", 4) == 0)
+			poweroff_charging = 1;
+	}
+#endif
+	/* Added to reserve and allocate memory for FB early during boot*/
+	if ((strncmp(param, "androidboot.boot_recovery", 26) == 0)) {
+			if (strncmp(val, "1", 1) == 0)
+				recovery_mode = 1;
+	}
 	return 0;
 }
 
@@ -795,21 +832,58 @@ static void run_init_process(const char *init_filename)
 	kernel_execve(init_filename, argv_init, envp_init);
 }
 
+extern initcall_t __deferred_initcall_start[], __deferred_initcall_end[];
+
+/* call deferred init routines */
+void __ref do_deferred_initcalls(void)
+{
+	initcall_t *call;
+	static int already_run=0;
+
+	if (already_run) {
+		printk("do_deferred_initcalls() has already run\n");
+		return;
+	}
+
+	already_run=1;
+
+	printk("Running do_deferred_initcalls()\n");
+
+	for(call = __deferred_initcall_start;
+	    call < __deferred_initcall_end; call++)
+		do_one_initcall(*call);
+
+	flush_scheduled_work();
+
+	free_initmem();
+}
+
 /* This is a non __init function. Force it to be noinline otherwise gcc
  * makes it inline to init() and it becomes part of init.text section
  */
 static noinline int init_post(void)
 {
+#ifdef CONFIG_SEC_GPIO_DVS
+	/************************ Caution !!! ****************************/
+	/* This function must be located in appropriate INIT position
+	 * in accordance with the specification of each BB vendor.
+	 */
+	/************************ Caution !!! ****************************/
+	gpio_dvs_check_initgpio();
+#endif
+
 	/* need to finish all async __init code before freeing the memory */
 	async_synchronize_full();
-	free_initmem();
+	//free_initmem(); /* Move to do_deferred_initcalls */
 	mark_rodata_ro();
 	system_state = SYSTEM_RUNNING;
 	numa_default_policy();
 
 
 	current->signal->flags |= SIGNAL_UNKILLABLE;
-
+#ifdef CONFIG_TIMA_RKP
+	tima_send_cmd4((unsigned long)_stext, (unsigned long)init_mm.pgd, (unsigned long)__init_begin, (unsigned long)__init_end, 0x3f80c221);
+#endif
 	if (ramdisk_execute_command) {
 		run_init_process(ramdisk_execute_command);
 		printk(KERN_WARNING "Failed to execute %s\n",

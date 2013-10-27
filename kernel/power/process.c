@@ -17,6 +17,8 @@
 #include <linux/delay.h>
 #include <linux/workqueue.h>
 #include <linux/kmod.h>
+#include <linux/wakelock.h>
+#include "power.h"
 
 /* 
  * Timeout for stopping processes
@@ -25,7 +27,7 @@
 
 static int try_to_freeze_tasks(bool user_only)
 {
-	struct task_struct *g, *p;
+	struct task_struct *g, *p, *q;
 	unsigned long end_time;
 	unsigned int todo;
 	bool wq_busy = false;
@@ -45,6 +47,7 @@ static int try_to_freeze_tasks(bool user_only)
 		todo = 0;
 		read_lock(&tasklist_lock);
 		do_each_thread(g, p) {
+			cpu_relax();
 			if (p == current || !freeze_task(p))
 				continue;
 
@@ -59,8 +62,10 @@ static int try_to_freeze_tasks(bool user_only)
 			 * transition can't race with task state testing here.
 			 */
 			if (!task_is_stopped_or_traced(p) &&
-			    !freezer_should_skip(p))
+			    !freezer_should_skip(p)) {
 				todo++;
+				q = p;
+			}
 		} while_each_thread(g, p);
 		read_unlock(&tasklist_lock);
 
@@ -90,18 +95,31 @@ static int try_to_freeze_tasks(bool user_only)
 	elapsed_csecs = elapsed_csecs64;
 
 	if (todo) {
-		printk("\n");
-		printk(KERN_ERR "Freezing of tasks %s after %d.%02d seconds "
-		       "(%d tasks refusing to freeze, wq_busy=%d):\n",
-		       wakeup ? "aborted" : "failed",
-		       elapsed_csecs / 100, elapsed_csecs % 100,
-		       todo - wq_busy, wq_busy);
+		/* This does not unfreeze processes that are already frozen
+		 * (we have slightly ugly calling convention in that respect,
+		 * and caller must call thaw_processes() if something fails),
+		 * but it cleans up leftover PF_FREEZE requests.
+		 */
+		if(wakeup) {
+			printk("\n");
+			printk(KERN_ERR "Freezing of %s aborted (%s)\n",
+					user_only ? "user space " : "tasks ", q ? q->comm : "NONE");
+		}
+		else {
+			printk("\n");
+			printk(KERN_ERR "Freezing of tasks %s after %d.%02d seconds "
+			       "(%d tasks refusing to freeze, wq_busy=%d):\n",
+			       wakeup ? "aborted" : "failed",
+			       elapsed_csecs / 100, elapsed_csecs % 100,
+			       todo - wq_busy, wq_busy);
+		}
 
 		if (!wakeup) {
 			read_lock(&tasklist_lock);
 			do_each_thread(g, p) {
 				if (p != current && !freezer_should_skip(p)
-				    && freezing(p) && !frozen(p))
+				    && freezing(p) && !frozen(p) &&
+				    elapsed_csecs > 100)
 					sched_show_task(p);
 			} while_each_thread(g, p);
 			read_unlock(&tasklist_lock);

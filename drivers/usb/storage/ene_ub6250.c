@@ -1558,6 +1558,8 @@ static int ms_lib_scan_logicalblocknumber(struct us_data *us, u16 btBlk1st)
 	u32 count = 0, index = 0;
 	struct ene_ub6250_info *info = (struct ene_ub6250_info *) us->extra;
 
+	memset(buf, 0, 0x200);
+
 	for (PhyBlock = 0; PhyBlock < info->MS_Lib.NumberOfPhyBlock;) {
 		ms_lib_phy_to_log_range(PhyBlock, &LogStart, &LogEnde);
 
@@ -1575,9 +1577,12 @@ static int ms_lib_scan_logicalblocknumber(struct us_data *us, u16 btBlk1st)
 			}
 			index = (PhyBlock % 0x80) * 4;
 
-			extdat.ovrflg = buf[index];
-			extdat.mngflg = buf[index+1];
-			extdat.logadr = memstick_logaddr(buf[index+2], buf[index+3]);
+			if (index < 509)
+			{
+				extdat.ovrflg = buf[index];
+				extdat.mngflg = buf[index+1];
+				extdat.logadr = memstick_logaddr(buf[index+2], buf[index+3]);
+			}
 
 			if ((extdat.ovrflg & MS_REG_OVR_BKST) != MS_REG_OVR_BKST_OK) {
 				ms_lib_setacquired_errorblock(us, PhyBlock);

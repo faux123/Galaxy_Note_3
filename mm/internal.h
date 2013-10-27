@@ -12,6 +12,9 @@
 #define __MM_INTERNAL_H
 
 #include <linux/mm.h>
+#ifdef CONFIG_ZSWAP
+#include <linux/rmap.h>
+#endif
 
 void free_pgtables(struct mmu_gather *tlb, struct vm_area_struct *start_vma,
 		unsigned long floor, unsigned long ceiling);
@@ -100,6 +103,39 @@ extern void prep_compound_page(struct page *page, unsigned long order);
 extern bool is_free_buddy_page(struct page *page);
 #endif
 
+#if defined CONFIG_COMPACTION || defined CONFIG_CMA
+
+/*
+ * in mm/compaction.c
+ */
+/*
+ * compact_control is used to track pages being migrated and the free pages
+ * they are being migrated to during memory compaction. The free_pfn starts
+ * at the end of a zone and migrate_pfn begins at the start. Movable pages
+ * are moved to the end of a zone during a compaction run and the run
+ * completes when free_pfn <= migrate_pfn
+ */
+struct compact_control {
+	struct list_head freepages;	/* List of free pages to migrate to */
+	struct list_head migratepages;	/* List of pages being migrated */
+	unsigned long nr_freepages;	/* Number of isolated free pages */
+	unsigned long nr_migratepages;	/* Number of pages to migrate */
+	unsigned long free_pfn;		/* isolate_freepages search base */
+	unsigned long migrate_pfn;	/* isolate_migratepages search base */
+	bool sync;			/* Synchronous migration */
+
+	int order;			/* order a direct compactor needs */
+	int migratetype;		/* MOVABLE, RECLAIMABLE etc */
+	struct zone *zone;
+};
+
+unsigned long
+isolate_freepages_range(unsigned long start_pfn, unsigned long end_pfn);
+unsigned long
+isolate_migratepages_range(struct zone *zone, struct compact_control *cc,
+			   unsigned long low_pfn, unsigned long end_pfn);
+
+#endif
 
 /*
  * function for dealing with page's order in buddy system.
@@ -309,3 +345,64 @@ extern u64 hwpoison_filter_flags_mask;
 extern u64 hwpoison_filter_flags_value;
 extern u64 hwpoison_filter_memcg;
 extern u32 hwpoison_filter_enable;
+
+/* The ALLOC_WMARK bits are used as an index to zone->watermark */
+#define ALLOC_WMARK_MIN		WMARK_MIN
+#define ALLOC_WMARK_LOW		WMARK_LOW
+#define ALLOC_WMARK_HIGH	WMARK_HIGH
+#define ALLOC_NO_WATERMARKS	0x04 /* don't check watermarks at all */
+
+/* Mask to get the watermark bits */
+#define ALLOC_WMARK_MASK	(ALLOC_NO_WATERMARKS-1)
+
+#define ALLOC_HARDER		0x10 /* try to alloc harder */
+#define ALLOC_HIGH		0x20 /* __GFP_HIGH set */
+#define ALLOC_CPUSET		0x40 /* check for correct cpuset */
+#define ALLOC_CMA		0x80 /* allow allocations from CMA areas */
+
+/*
+ * Unnecessary readahead harms performance, especially for SSD devices, where
+ * large reads are significantly more expensive than small ones.
+ * These implements simple swap random access detection. In swap page fault: if
+ * the page is found in swapcache, decrease a counter in the vma, otherwise we
+ * need to perform sync swapin and the counter is increased.  Optionally swapin
+ * will perform readahead if the counter is below a threshold.
+ */
+#ifdef CONFIG_ZSWAP
+#define SWAPRA_MISS_THRESHOLD  (100)
+#define SWAPRA_MAX_MISS ((SWAPRA_MISS_THRESHOLD) * 10)
+static inline void swap_cache_hit(struct vm_area_struct *vma)
+{
+	if (vma && vma->anon_vma)
+		atomic_dec_if_positive(&vma->anon_vma->swapra_miss);
+}
+
+static inline void swap_cache_miss(struct vm_area_struct *vma)
+{
+	if (!vma || !vma->anon_vma)
+		return;
+	if (atomic_read(&vma->anon_vma->swapra_miss) < SWAPRA_MAX_MISS)
+		atomic_inc(&vma->anon_vma->swapra_miss);
+}
+
+static inline int swap_cache_skip_readahead(struct vm_area_struct *vma)
+{
+	if (!vma || !vma->anon_vma)
+		return 0;
+	return atomic_read(&vma->anon_vma->swapra_miss) >
+		SWAPRA_MISS_THRESHOLD;
+}
+#else
+static inline void swap_cache_hit(struct vm_area_struct *vma)
+{
+}
+
+static inline void swap_cache_miss(struct vm_area_struct *vma)
+{
+}
+
+static inline int swap_cache_skip_readahead(struct vm_area_struct *vma)
+{
+	return 0;
+}
+#endif	/* CONFIG_ZSWAP */
