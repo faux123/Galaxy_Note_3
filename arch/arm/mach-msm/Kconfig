@@ -3567,12 +3567,5 @@ config PCM_ROUTE_VOICE_STUB
 	default n
 	bool "External AUXPCM device route to SLIMBUS or WCN(BT) using the VOICE_STUB Front End"
 	depends on ARCH_MSM8974
-
-config FORCE_FAST_CHARGE
-	bool "Force AC charge mode at will"
-	default y
-	help
-	  A simple sysfs interface to force adapters that
-	  are detected as USB to charge as AC.
 	
 endif
