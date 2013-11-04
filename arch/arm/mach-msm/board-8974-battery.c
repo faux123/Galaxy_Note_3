@@ -49,6 +49,10 @@
 #include <linux/qpnp/qpnp-adc.h>
 #endif
 
+#ifdef CONFIG_FORCE_FAST_CHARGE
+#include <linux/fastchg.h>
+#endif
+
 #if defined(CONFIG_BATTERY_SAMSUNG)
 #include <linux/battery/sec_battery.h>
 #include <linux/battery/sec_fuelgauge.h>
@@ -148,20 +152,23 @@ static sec_charging_current_t charging_current_table[] = {
 	{460,	0,	0,	0},
 	{460,	0,	0,	0},
 #else
-	{1800,	2100,	200,	40*60},
-	{460,	0,	0,	0},
-	{460,	460,	200,	40*60},
-	{1800,	2100,	200,	40*60},
-	{460,	460,	200,	40*60},
-	{900,	1200,	200,	40*60},
-	{1000,	1000,	200,	40*60},
-	{460,	460,	200,	40*60},
-	{1000,	1200,	200,	40*60},
-	{460,	0,	0,	0},
-	{650,	750,	200,	40*60},
-	{1800,	2100,	200,	40*60},
-	{460,	0,	0,	0},
-	{460,	0,	0,	0},
+/*	Samsung hlteeur :                                                 documented by Yank555.lu */
+/*	-----------------                                                                          */
+/*	input_current_limit, fast_charging_current, full_check_current_1st, full_check_current_2nd */
+	{1800,	2100,	200,	40*60},	/* POWER_SUPPLY_TYPE_UNKNOWN */
+	{460,	0,	0,	0},	/* POWER_SUPPLY_TYPE_BATTERY */
+	{460,	460,	200,	40*60},	/* POWER_SUPPLY_TYPE_UPS */
+	{1800,	2100,	200,	40*60},	/* POWER_SUPPLY_TYPE_MAINS */
+	{460,	460,	200,	40*60},	/* POWER_SUPPLY_TYPE_USB     - Standard Downstream Port   */
+	{900,	1200,	200,	40*60},	/* POWER_SUPPLY_TYPE_USB_DCP - Dedicated Charging Port    */
+	{1000,	1000,	200,	40*60},	/* POWER_SUPPLY_TYPE_USB_CDP - Charging Downstream Port   */
+	{460,	460,	200,	40*60},	/* POWER_SUPPLY_TYPE_USB_ACA - Accessory Charger Adapters */
+	{1000,	1200,	200,	40*60},	/* POWER_SUPPLY_TYPE_MISC */
+	{460,	0,	0,	0},	/* POWER_SUPPLY_TYPE_CARDOCK */
+	{650,	750,	200,	40*60},	/* POWER_SUPPLY_TYPE_WIRELESS */
+	{1800,	2100,	200,	40*60},	/* POWER_SUPPLY_TYPE_UARTOFF */
+	{460,	0,	0,	0},	/* POWER_SUPPLY_TYPE_OTG */
+	{460,	0,	0,	0},	/* POWER_SUPPLY_TYPE_BMS */
 #endif
 };
 
@@ -380,6 +387,37 @@ static int sec_bat_get_cable_from_extended_cable_type(
 		cable_type = cable_main;
 		break;
 	}
+
+#ifdef CONFIG_FORCE_FAST_CHARGE
+	if (force_fast_charge == FAST_CHARGE_FORCE_AC) { /* We are in basic Fast Charge mode, so we substitute AC to USB levels */
+		switch(cable_type) {
+			case POWER_SUPPLY_TYPE_USB:	/* These are low current USB connections, apply normal 1A/h AC levels to USB */
+			case POWER_SUPPLY_TYPE_USB_ACA:
+			case POWER_SUPPLY_TYPE_CARDOCK:
+			case POWER_SUPPLY_TYPE_OTG:	charge_current_max = USB_CHARGE_1000;
+							charge_current     = USB_CHARGE_1000;
+							break;
+
+		}
+	} else if (force_fast_charge == FAST_CHARGE_FORCE_CUSTOM_MA) { /* We are in advanced Fast Charge mode, so we apply custom charging levels for both AC and USB */
+		switch(cable_type) {
+			case POWER_SUPPLY_TYPE_USB:	/* These are USB connections, apply custom USB current for all of them */
+			case POWER_SUPPLY_TYPE_USB_DCP:
+			case POWER_SUPPLY_TYPE_USB_CDP:
+			case POWER_SUPPLY_TYPE_USB_ACA:
+			case POWER_SUPPLY_TYPE_CARDOCK:
+			case POWER_SUPPLY_TYPE_OTG:	charge_current_max = usb_charge_level;
+							charge_current     = usb_charge_level;
+							break;
+			case POWER_SUPPLY_TYPE_MAINS:	/* These are AC connections, apply custom AC current for all of them */
+							charge_current_max = ac_charge_level;
+							charge_current     = min(ac_charge_level+300, MAX_CHARGE_LEVEL); /* Keep the 300mA/h delta, but never go above 2.1A/h */
+							break;
+			default:			/* Don't do anything for any other kind of connections and don't touch when type is unknown */
+							break;
+		}
+	}
+#endif
 
 	if (charge_current_max == 0) {
 		charge_current_max =
