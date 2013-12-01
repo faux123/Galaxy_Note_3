@@ -59,6 +59,13 @@ config MDNIE_LITE_TUNING
 	bool "MDNIe lite panel tuning"
 	default n
 
+config MDNIE_LITE_CONTROL
+	depends on MDNIE_LITE_TUNING
+	bool "MDNIE User Hack"
+	default y
+	help
+	  option to custom tune the MDNIE parameters
+
 config FB_MSM_MIPI_SAMSUNG_OCTA_VIDEO_FULL_HD_PT_PANEL
 	bool "Support SAMSUNG OCTA Video Full-HD Panel"
 	default n
@@ -122,3 +129,4 @@ config FB_MSM_MIPI_TFT_VIDEO_FULL_HD_PT_PANEL
 config ESD_ERR_FG_RECOVERY
 	bool "ESD Feature"
 	default n
+
