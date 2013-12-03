@@ -64,12 +64,6 @@
 #include "mdnie_lite_tuning_data_dmb.h"
 #endif
 
-#define MDNIE_LITE_CONTROL
-
-#ifdef MDNIE_LITE_CONTROL
-#include "mdnie_lite_control.h"
-#endif
-
 static struct mipi_samsung_driver_data *mdnie_msd;
 
 
@@ -88,6 +82,8 @@ static struct mipi_samsung_driver_data *mdnie_msd;
 
 #define INPUT_PAYLOAD1(x) PAYLOAD1.payload = x
 #define INPUT_PAYLOAD2(x) PAYLOAD2.payload = x
+
+#define MDNIE_LITE_CONTROL
 
 #ifdef MDNIE_LITE_CONTROL
 int sharpen = 1;
