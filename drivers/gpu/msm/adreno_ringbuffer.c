@@ -1194,6 +1194,12 @@ adreno_ringbuffer_issueibcmds(struct kgsl_device_private *dev_priv,
 		test_bit(ADRENO_DEVICE_PWRON_FIXUP, &adreno_dev->priv))
 		flags |= KGSL_CMD_FLAGS_PWRON_FIXUP;
 
+	/*
+	 * Clear the wake on touch bit to indicate an IB has been submitted
+	 * since the last time we set it
+	 */
+	device->flags &= ~KGSL_FLAG_WAKE_ON_TOUCH;
+
 	*timestamp = adreno_ringbuffer_addcmds(&adreno_dev->ringbuffer,
 					drawctxt,
 					flags,
