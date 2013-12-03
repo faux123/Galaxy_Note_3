@@ -378,7 +378,6 @@ static char DYNAMIC_UI_2[] = {
 	0x36,
 };
 
-#ifndef CONFIG_MDNIE_LITE_CONTROL
 static char MOVIE_UI_1[] = {
 	0xEB,
 	0x01, //mdnie_en
@@ -497,7 +496,6 @@ static char MOVIE_UI_2[] = {
 	0x04, //cc b3
 	0xb5,
 };
-#endif
 
 char AUTO_UI_1[] = {
 	0xEB,
@@ -976,7 +974,6 @@ static char DYNAMIC_GALLERY_2[] = {
 	0x36,
 };
 
-#ifndef CONFIG_MDNIE_LITE_CONTROL
 static char MOVIE_GALLERY_1[] = {
 	0xEB,
 	0x01, //mdnie_en
@@ -1095,7 +1092,6 @@ static char MOVIE_GALLERY_2[] = {
 	0x04, //cc b3
 	0xb5,
 };
-#endif
 
 char AUTO_GALLERY_1[] = {
 	0xEB,
@@ -1575,7 +1571,6 @@ static char DYNAMIC_VIDEO_2[] = {
 	0x36,
 };
 
-#ifndef CONFIG_MDNIE_LITE_CONTROL
 static char MOVIE_VIDEO_1[] = {
 	0xEB,
 	0x01, //mdnie_en
@@ -1694,7 +1689,6 @@ static char MOVIE_VIDEO_2[] = {
 	0x04, //cc b3
 	0xb5,
 };
-#endif
 
 char AUTO_VIDEO_1[] = {
 	0xEB,
@@ -2174,7 +2168,6 @@ static char DYNAMIC_VT_2[] = {
 	0x36,
 };
 
-#ifndef CONFIG_MDNIE_LITE_CONTROL
 static char MOVIE_VT_1[] = {
 	0xEB,
 	0x01, //mdnie_en
@@ -2293,7 +2286,6 @@ static char MOVIE_VT_2[] = {
 	0x04, //cc b3
 	0xb5,
 };
-#endif
 
 char AUTO_VT_1[] = {
 	0xEB,

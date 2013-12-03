@@ -64,7 +64,9 @@
 #include "mdnie_lite_tuning_data_dmb.h"
 #endif
 
-#ifdef CONFIG_MDNIE_LITE_CONTROL
+#define MDNIE_LITE_CONTROL
+
+#ifdef MDNIE_LITE_CONTROL
 #include "mdnie_lite_control.h"
 #endif
 
@@ -87,7 +89,7 @@ static struct mipi_samsung_driver_data *mdnie_msd;
 #define INPUT_PAYLOAD1(x) PAYLOAD1.payload = x
 #define INPUT_PAYLOAD2(x) PAYLOAD2.payload = x
 
-#ifdef CONFIG_MDNIE_LITE_CONTROL
+#ifdef MDNIE_LITE_CONTROL
 int sharpen = 1;
 
 int red_red = 247;
@@ -204,7 +206,7 @@ void print_tun_data(void)
 	DPRINT("\n");
 }
 
-#ifdef CONFIG_MDNIE_LITE_CONTROL
+#ifdef MDNIE_LITE_CONTROL
 void update_mdnie(void)
 {
 	LITE_CONTROL_1[4] = sharpen;
@@ -297,7 +299,7 @@ void mDNIe_Set_Mode(enum Lcd_mDNIe_UI mode)
 	}
 
 	play_speed_1_5 = 0;
-#ifdef CONFIG_MDNIE_LITE_CONTROL
+#ifdef MDNIE_LITE_CONTROL
 	update_mdnie();
 #endif
 
@@ -327,7 +329,7 @@ void mDNIe_Set_Mode(enum Lcd_mDNIe_UI mode)
 			INPUT_PAYLOAD1(DYNAMIC_UI_1);
 			INPUT_PAYLOAD2(DYNAMIC_UI_2);
 		} else if (mdnie_tun_state.background == MOVIE_MODE) {
-#ifdef CONFIG_MDNIE_LITE_CONTROL
+#ifdef MDNIE_LITE_CONTROL
 			DPRINT(" = CONTROL MODE =\n");
 			INPUT_PAYLOAD1(LITE_CONTROL_1);
 			INPUT_PAYLOAD2(LITE_CONTROL_2);
@@ -366,7 +368,7 @@ void mDNIe_Set_Mode(enum Lcd_mDNIe_UI mode)
 				INPUT_PAYLOAD1(DYNAMIC_VIDEO_1);
 				INPUT_PAYLOAD2(DYNAMIC_VIDEO_2);
 			} else if (mdnie_tun_state.background == MOVIE_MODE) {
-#ifdef CONFIG_MDNIE_LITE_CONTROL
+#ifdef MDNIE_LITE_CONTROL
 				DPRINT(" = CONTROL MODE =\n");
 				INPUT_PAYLOAD1(LITE_CONTROL_1);
 				INPUT_PAYLOAD2(LITE_CONTROL_2);
@@ -450,7 +452,7 @@ void mDNIe_Set_Mode(enum Lcd_mDNIe_UI mode)
 			INPUT_PAYLOAD1(DYNAMIC_GALLERY_1);
 			INPUT_PAYLOAD2(DYNAMIC_GALLERY_2);
 		} else if (mdnie_tun_state.background == MOVIE_MODE) {
-#ifdef CONFIG_MDNIE_LITE_CONTROL
+#ifdef MDNIE_LITE_CONTROL
 			DPRINT(" = CONTROL MODE =\n");
 			INPUT_PAYLOAD1(LITE_CONTROL_1);
 			INPUT_PAYLOAD2(LITE_CONTROL_2);
@@ -483,7 +485,7 @@ void mDNIe_Set_Mode(enum Lcd_mDNIe_UI mode)
 			INPUT_PAYLOAD1(DYNAMIC_VT_1);
 			INPUT_PAYLOAD2(DYNAMIC_VT_2);
 		} else if (mdnie_tun_state.background == MOVIE_MODE) {
-#ifdef CONFIG_MDNIE_LITE_CONTROL
+#ifdef MDNIE_LITE_CONTROL
 			DPRINT(" = CONTROL MODE =\n");
 			INPUT_PAYLOAD1(LITE_CONTROL_1);
 			INPUT_PAYLOAD2(LITE_CONTROL_2);
@@ -523,7 +525,7 @@ void mDNIe_Set_Mode(enum Lcd_mDNIe_UI mode)
 				INPUT_PAYLOAD1(DYNAMIC_DMB_1);
 				INPUT_PAYLOAD2(DYNAMIC_DMB_2);
 			} else if (mdnie_tun_state.background == MOVIE_MODE) {
-#ifdef CONFIG_MDNIE_LITE_CONTROL
+#ifdef MDNIE_LITE_CONTROL
 				DPRINT(" = CONTROL MODE =\n");
 				INPUT_PAYLOAD1(LITE_CONTROL_1);
 				INPUT_PAYLOAD2(LITE_CONTROL_2);
@@ -584,7 +586,7 @@ void mDNIe_Set_Mode(enum Lcd_mDNIe_UI mode)
 			INPUT_PAYLOAD1(DYNAMIC_BROWSER_1);
 			INPUT_PAYLOAD2(DYNAMIC_BROWSER_2);
 		} else if (mdnie_tun_state.background == MOVIE_MODE) {
-#ifdef CONFIG_MDNIE_LITE_CONTROL
+#ifdef MDNIE_LITE_CONTROL
 			DPRINT(" = CONTROL MODE =\n");
 			INPUT_PAYLOAD1(LITE_CONTROL_1);
 			INPUT_PAYLOAD2(LITE_CONTROL_2);
@@ -617,7 +619,7 @@ void mDNIe_Set_Mode(enum Lcd_mDNIe_UI mode)
 			INPUT_PAYLOAD1(DYNAMIC_EBOOK_1);
 			INPUT_PAYLOAD2(DYNAMIC_EBOOK_2);
 		} else if (mdnie_tun_state.background == MOVIE_MODE) {
-#ifdef CONFIG_MDNIE_LITE_CONTROL
+#ifdef MDNIE_LITE_CONTROL
 			DPRINT(" = CONTROL MODE =\n");
 			INPUT_PAYLOAD1(LITE_CONTROL_1);
 			INPUT_PAYLOAD2(LITE_CONTROL_2);
@@ -874,7 +876,7 @@ static ssize_t scenario_store(struct device *dev,
 static DEVICE_ATTR(scenario, 0664, scenario_show,
 		   scenario_store);
 
-#ifdef CONFIG_MDNIE_LITE_CONTROL
+#ifdef MDNIE_LITE_CONTROL
 /* sharpen */
 
 static ssize_t sharpen_show(struct device *dev, struct device_attribute *attr, char *buf)
@@ -1771,7 +1773,7 @@ void init_mdnie_class(void)
 		pr_err("Failed to create device file(%s)!=n",
 			dev_attr_accessibility.attr.name);
 
-#ifdef CONFIG_MDNIE_LITE_CONTROL
+#ifdef MDNIE_LITE_CONTROL
 	device_create_file(tune_mdnie_dev, &dev_attr_sharpen);
 	device_create_file(tune_mdnie_dev, &dev_attr_red_red);
 	device_create_file(tune_mdnie_dev, &dev_attr_red_green);
