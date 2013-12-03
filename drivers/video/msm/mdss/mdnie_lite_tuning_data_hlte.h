@@ -21,6 +21,127 @@
 
 ////////////////// UI /// /////////////////////
 
+#if defined(CONFIG_MDNIE_LITE_CONTROL)
+char LITE_CONTROL_1[] = {
+	0xEB,
+	0x01,
+	0x00,
+	0x33,
+	0x00, //4 = sharpen
+};
+
+char LITE_CONTROL_2[] = {
+	0xEC,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00, //18 = cyan_red
+	0x00, //19 = red_red
+	0x00, //20 = cyan_green
+	0x00, //21 = red_green
+	0x00, //22 = cyan_blue
+	0x00, //23 = red_blue
+	0x00, //24 = magenta_red
+	0x00, //25 = green_red
+	0x00, //26 = magenta_green
+	0x00, //27 = green_green
+	0x00, //28 = magenta_blue
+	0x00, //29 = green_blue
+	0x00, //30 = yellow_red
+	0x00, //31 = blue_red
+	0x00, //32 = yellow_green
+	0x00, //33 = blue_green
+	0x00, //34 = yellow_blue
+	0x00, //35 = blue_blue
+	0x00, //36 = white_red
+	0x00, //37 = black_red
+	0x00, //38 = white_green
+	0x00, //39 = black_green
+	0x00, //40 = white_blue
+	0x00, //41 = black_blue
+	0x00, //curve 1 b
+	0x20, //curve 1 a
+	0x00, //curve 2 b
+	0x20, //curve 2 a
+	0x00, //curve 3 b
+	0x20, //curve 3 a
+	0x00, //curve 4 b
+	0x20, //curve 4 a
+	0x02, //curve 5 b
+	0x1b, //curve 5 a
+	0x02, //curve 6 b
+	0x1b, //curve 6 a
+	0x02, //curve 7 b
+	0x1b, //curve 7 a
+	0x01, //curve 8 b
+	0x1b, //curve 8 a
+	0x09, //curve 9 b
+	0xa6, //curve 9 a
+	0x09, //curve10 b
+	0xa6, //curve10 a
+	0x09, //curve11 b
+	0xa6, //curve11 a
+	0x09, //curve12 b
+	0xa6, //curve12 a
+	0x00, //curve13 b
+	0x20, //curve13 a
+	0x00, //curve14 b
+	0x20, //curve14 a
+	0x00, //curve15 b
+	0x20, //curve15 a
+	0x00, //curve16 b
+	0x20, //curve16 a
+	0x00, //curve17 b
+	0x20, //curve17 a
+	0x00, //curve18 b
+	0x20, //curve18 a
+	0x00, //curve19 b
+	0x20, //curve19 a
+	0x00, //curve20 b
+	0x20, //curve20 a
+	0x00, //curve21 b
+	0x20, //curve21 a
+	0x00, //curve22 b
+	0x20, //curve22 a
+	0x00, //curve23 b
+	0x20, //curve23 a
+	0x00, //curve24 b
+	0xFF, //curve24 a
+	0x04, //cc r1 0.2
+	0x90,
+	0x1f, //cc r2
+	0x88,
+	0x1f, //cc r3
+	0xe8,
+	0x1f, //cc g1
+	0xc3,
+	0x04, //cc g2
+	0x55,
+	0x1f, //cc g3
+	0xe8,
+	0x1f, //cc b1
+	0xc3,
+	0x1f, //cc b2
+	0x88,
+	0x04, //cc b3
+	0xb5,
+};
+#endif
+
 static char STANDARD_UI_1[] = {
 	0xEB,
 	0x01, //mdnie_en
@@ -378,6 +499,7 @@ static char DYNAMIC_UI_2[] = {
 	0x36,
 };
 
+#if !defined(CONFIG_MDNIE_LITE_CONTROL)
 static char MOVIE_UI_1[] = {
 	0xEB,
 	0x01, //mdnie_en
@@ -496,6 +618,7 @@ static char MOVIE_UI_2[] = {
 	0x04, //cc b3
 	0xb5,
 };
+#endif
 
 char AUTO_UI_1[] = {
 	0xEB,
@@ -974,6 +1097,7 @@ static char DYNAMIC_GALLERY_2[] = {
 	0x36,
 };
 
+#if !defined(CONFIG_MDNIE_LITE_CONTROL)
 static char MOVIE_GALLERY_1[] = {
 	0xEB,
 	0x01, //mdnie_en
@@ -1092,6 +1216,7 @@ static char MOVIE_GALLERY_2[] = {
 	0x04, //cc b3
 	0xb5,
 };
+#endif
 
 char AUTO_GALLERY_1[] = {
 	0xEB,
@@ -1571,6 +1696,7 @@ static char DYNAMIC_VIDEO_2[] = {
 	0x36,
 };
 
+#if !defined(CONFIG_MDNIE_LITE_CONTROL)
 static char MOVIE_VIDEO_1[] = {
 	0xEB,
 	0x01, //mdnie_en
@@ -1689,6 +1815,7 @@ static char MOVIE_VIDEO_2[] = {
 	0x04, //cc b3
 	0xb5,
 };
+#endif
 
 char AUTO_VIDEO_1[] = {
 	0xEB,
@@ -2168,6 +2295,7 @@ static char DYNAMIC_VT_2[] = {
 	0x36,
 };
 
+#if !defined(CONFIG_MDNIE_LITE_CONTROL)
 static char MOVIE_VT_1[] = {
 	0xEB,
 	0x01, //mdnie_en
@@ -2286,6 +2414,7 @@ static char MOVIE_VT_2[] = {
 	0x04, //cc b3
 	0xb5,
 };
+#endif
 
 char AUTO_VT_1[] = {
 	0xEB,
