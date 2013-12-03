@@ -142,6 +142,7 @@ char LITE_CONTROL_2[] = {
 };
 #endif
 
+#if !defined(CONFIG_MDNIE_LITE_CONTROL)
 static char STANDARD_UI_1[] = {
 	0xEB,
 	0x01, //mdnie_en
@@ -260,6 +261,7 @@ static char STANDARD_UI_2[] = {
 	0x04, //cc b3
 	0x48,
 };
+#endif
 
 static char NATURAL_UI_1[] = {
 	0xEB,
@@ -499,7 +501,6 @@ static char DYNAMIC_UI_2[] = {
 	0x36,
 };
 
-#if !defined(CONFIG_MDNIE_LITE_CONTROL)
 static char MOVIE_UI_1[] = {
 	0xEB,
 	0x01, //mdnie_en
@@ -618,7 +619,6 @@ static char MOVIE_UI_2[] = {
 	0x04, //cc b3
 	0xb5,
 };
-#endif
 
 char AUTO_UI_1[] = {
 	0xEB,
@@ -740,6 +740,8 @@ char AUTO_UI_2[] = {
 };
 
 ////////////////// GALLERY /////////////////////
+
+#if !defined(CONFIG_MDNIE_LITE_CONTROL)
 static char STANDARD_GALLERY_1[] = {
 	0xEB,
 	0x01, //mdnie_en
@@ -858,6 +860,7 @@ static char STANDARD_GALLERY_2[] = {
 	0x04, //cc b3
 	0x36,
 };
+#endif
 
 static char NATURAL_GALLERY_1[] = {
 	0xEB,
@@ -1097,7 +1100,6 @@ static char DYNAMIC_GALLERY_2[] = {
 	0x36,
 };
 
-#if !defined(CONFIG_MDNIE_LITE_CONTROL)
 static char MOVIE_GALLERY_1[] = {
 	0xEB,
 	0x01, //mdnie_en
@@ -1216,7 +1218,6 @@ static char MOVIE_GALLERY_2[] = {
 	0x04, //cc b3
 	0xb5,
 };
-#endif
 
 char AUTO_GALLERY_1[] = {
 	0xEB,
@@ -1339,6 +1340,7 @@ char AUTO_GALLERY_2[] = {
 
 ////////////////// VIDEO /////////////////////
 
+#if !defined(CONFIG_MDNIE_LITE_CONTROL)
 static char STANDARD_VIDEO_1[] = {
 	0xEB,
 	0x01, //mdnie_en
@@ -1457,6 +1459,7 @@ static char STANDARD_VIDEO_2[] = {
 	0x04, //cc b3
 	0x36,
 };
+#endif
 
 static char NATURAL_VIDEO_1[] = {
 	0xEB,
@@ -1696,7 +1699,6 @@ static char DYNAMIC_VIDEO_2[] = {
 	0x36,
 };
 
-#if !defined(CONFIG_MDNIE_LITE_CONTROL)
 static char MOVIE_VIDEO_1[] = {
 	0xEB,
 	0x01, //mdnie_en
@@ -1815,7 +1817,6 @@ static char MOVIE_VIDEO_2[] = {
 	0x04, //cc b3
 	0xb5,
 };
-#endif
 
 char AUTO_VIDEO_1[] = {
 	0xEB,
@@ -1938,6 +1939,7 @@ char AUTO_VIDEO_2[] = {
 
 ////////////////// VT /////////////////////
 
+#if !defined(CONFIG_MDNIE_LITE_CONTROL)
 static char STANDARD_VT_1[] = {
 	0xEB,
 	0x01, //mdnie_en
@@ -2056,6 +2058,7 @@ static char STANDARD_VT_2[] = {
 	0x04, //cc b3
 	0x36,
 };
+#endif
 
 static char NATURAL_VT_1[] = {
 	0xEB,
@@ -2295,7 +2298,6 @@ static char DYNAMIC_VT_2[] = {
 	0x36,
 };
 
-#if !defined(CONFIG_MDNIE_LITE_CONTROL)
 static char MOVIE_VT_1[] = {
 	0xEB,
 	0x01, //mdnie_en
@@ -2414,7 +2416,6 @@ static char MOVIE_VT_2[] = {
 	0x04, //cc b3
 	0xb5,
 };
-#endif
 
 char AUTO_VT_1[] = {
 	0xEB,
@@ -2537,6 +2538,7 @@ char AUTO_VT_2[] = {
 
 ////////////////// CAMERA /////////////////////
 
+#if !defined(CONFIG_MDNIE_LITE_CONTROL)
 static char CAMERA_1[] = {
 	0xEB,
 	0x01, //mdnie_en
@@ -2655,6 +2657,7 @@ static char CAMERA_2[] = {
 	0x04, //cc b3
 	0x36,
 };
+#endif
 
 char AUTO_CAMERA_1[] = {
 	0xEB,
@@ -3292,6 +3295,7 @@ char COLOR_BLIND_2[] = {
 
 ////////////////// BROWSER /////////////////////
 
+#if !defined(CONFIG_MDNIE_LITE_CONTROL)
 char STANDARD_BROWSER_1[] = {
 	0xEB,
 	0x01, //mdnie_en
@@ -3410,6 +3414,7 @@ char STANDARD_BROWSER_2[] = {
 	0x04, //cc b3
 	0x36,
 };
+#endif
 
 char NATURAL_BROWSER_1[] = {
 	0xEB,
@@ -4008,6 +4013,7 @@ char AUTO_EBOOK_2[] = {
 	0x36,
 };
 
+#if !defined(CONFIG_MDNIE_LITE_CONTROL)
 char STANDARD_EBOOK_1[] = {
 	0xEB,
 	0x01, //mdnie_en
@@ -4126,6 +4132,7 @@ char STANDARD_EBOOK_2[] = {
 	0x04, //cc b3
 	0x36,
 };
+#endif
 
 char DYNAMIC_EBOOK_1[] = {
 	0xEB,
