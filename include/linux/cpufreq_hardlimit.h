@@ -15,7 +15,7 @@
 #ifndef _LINUX_CPUFREQ_HARDLIMIT_H
 #define _LINUX_CPUFREQ_HARDLIMIT_H
 
-#define CPUFREQ_HARDLIMIT_VERSION "v1.0 by Yank555.lu"
+#define CPUFREQ_HARDLIMIT_VERSION "v1.1 by Yank555.lu"
 
 extern unsigned int cpufreq_hardlimit;
 
