@@ -32,6 +32,10 @@
 #endif
 #include <linux/of_gpio.h>
 
+#ifdef CONFIG_TOUCH_WAKE
+#include <linux/touch_wake.h>
+#endif
+
 bool ums_binary;
 unsigned char screen_rotate;
 unsigned char user_hand = 1;
@@ -43,6 +47,10 @@ static struct wacom_features wacom_feature_EMR = {
 	.fw_ic_version = 0x0,
 	.firm_update_status = 0,
 };
+
+#ifdef CONFIG_TOUCH_WAKE
+static struct wacom_i2c *touchwake_pen_data;
+#endif
 
 static void wacom_enable_irq(struct wacom_i2c *wac_i2c, bool enable)
 {
@@ -164,6 +172,35 @@ static void wacom_i2c_disable(struct wacom_i2c *wac_i2c)
 	}
 }
 
+#ifdef CONFIG_TOUCH_WAKE
+// Yank555.lu - Add hooks to enable / disable the digitizer for touchwake
+void touchscreen_pen_disable(void)
+{
+	#ifdef TOUCHWAKE_DEBUG_PRINT
+	pr_info("[TOUCHWAKE] Wacom disable\n");
+	#endif
+
+	if (touchwake_pen_data != NULL)
+		wacom_i2c_disable(touchwake_pen_data);
+
+	return;
+}
+EXPORT_SYMBOL(touchscreen_pen_disable);
+
+void touchscreen_pen_enable(void)
+{
+	#ifdef TOUCHWAKE_DEBUG_PRINT
+	pr_info("[TOUCHWAKE] Wacom enable\n");
+	#endif
+
+	if (touchwake_pen_data != NULL)
+		wacom_i2c_enable(touchwake_pen_data);
+
+	return;
+}
+EXPORT_SYMBOL(touchscreen_pen_enable);
+#endif
+
 static irqreturn_t wacom_interrupt(int irq, void *dev_id)
 {
 	struct wacom_i2c *wac_i2c = dev_id;
@@ -186,6 +223,14 @@ static irqreturn_t wacom_interrupt_pdct(int irq, void *dev_id)
 	dev_info(&wac_i2c->client->dev, "%s: pdct %d(%d) [%s]\n",
 			__func__, wac_i2c->pen_pdct, wac_i2c->pen_prox,
 			wac_i2c->pen_pdct ? "Released" : "Pressed");
+#ifdef CONFIG_TOUCH_WAKE
+	if (touchwake_active() && !wac_i2c->pen_pdct) {
+		#ifdef TOUCHWAKE_DEBUG_PRINT
+		pr_info("[TOUCHWAKE] Wacom Pen pressed\n");
+		#endif
+		touch_press(); // Yank555.lu - Screen touched by pen
+	}
+#endif
 #if 0
 	if (wac_i2c->pen_pdct == PDCT_NOSIGNAL) {
 		/* If rdy is 1, pen is still working*/
@@ -1651,6 +1696,12 @@ static int wacom_i2c_probe(struct i2c_client *client,
 	schedule_delayed_work(&wac_i2c->boot_done_work,
 					msecs_to_jiffies(20 * 1000));
 #endif
+#ifdef CONFIG_TOUCH_WAKE
+	// Yank555.lu - Store the data for touchwake
+	touchwake_pen_data = wac_i2c;
+	if (touchwake_pen_data == NULL)
+		pr_err("[TOUCHWAKE] Failed to set Wacom touchwake_pen_data\n");
+#endif 
 
 	return 0;
 
