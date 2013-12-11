@@ -8,7 +8,46 @@
  *
  * --------------------------------------------------------------------------------------
  *
+ * v1.0 : initial version, finger and pen working
+ *
+ * v1.1 : added proxy detection (threshold) to detect cases like device on ear for call
+ *        slight code review
+ *
+ * --------------------------------------------------------------------------------------
+ *
  * Base idea by Ezekeel
+ *
+ * --------------------------------------------------------------------------------------
+ *
+ * SysFs interface :
+ * -----------------
+ *
+ * /sys/class/misc/touchwake/enabled (rw) : 0 - on / 1 - off
+ *
+ *     Enable / Disable TouchWake
+ *
+ *     NB: Turning the device off with the power key will disable touchwake
+ *
+ * /sys/class/misc/touchwake/delay (rw) :
+ *
+ *     Sets the delay in ms to keep touchscreen / pen actively listening for touch after screen goes off
+ *
+ *     NB: A value of 0 equals "infinite", will drain battery !
+ *
+ * /sys/class/misc/touchwake/proximity_threshold (rw) :
+ *
+ *     Sets the threshold from which to consider the proxy triggered (which will disable touchwake)
+ *
+ *     NB: This serves as a kind of in-call detection to not turn the screen on during a call when placing
+ *         the device to the ear
+ *
+ * /sys/class/misc/touchwake/version (ro) :
+ *
+ *     Display the current version of the eXtended ConTRoLs
+ *
+ * /sys/class/misc/touchwake/debug (ro) :
+ *
+ *     Display debugging info (only if debugging is active at compilation time)
  *
  */
 
@@ -23,18 +62,24 @@
 #include <linux/wakelock.h>
 #include <linux/input.h>
 
+// Hooks in Synaptics touchscreen driver
 extern void touchscreen_enable(void);
 extern void touchscreen_disable(void);
 
+// Hooks in Wacom pen driver
 extern void touchscreen_pen_enable(void);
 extern void touchscreen_pen_disable(void);
+
+// Hook in MAX88920 proximity sensor
+extern u16 get_proxy_data(void);
 
 static bool touchwake_enabled = false;
 static bool touch_disabled = false;
 static bool device_suspended = false;
 static bool timed_out = true;
-static bool keep_awake = false;
+static bool touchwake_active = false;
 static unsigned int touchoff_delay = 5000;
+static u16 proximity_threshold = 150;
 
 static void touchwake_touchoff(struct work_struct *touchoff_work);
 static DECLARE_DELAYED_WORK(touchoff_work, touchwake_touchoff);
@@ -45,11 +90,6 @@ static DEFINE_MUTEX(lock);
 static struct input_dev *powerkey_device;
 static struct wake_lock touchwake_wake_lock;
 static struct timeval last_powerkeypress;
-
-#define TOUCHWAKE_VERSION "1.0 by Yank555.lu"
-#define TIME_LONGPRESS 500
-#define POWERPRESS_DELAY 60
-#define POWERPRESS_TIMEOUT 1000
 
 static void touchwake_disable_touch(void)
 {
@@ -74,6 +114,12 @@ static void touchwake_enable_touch(void)
 	return;
 }
 
+bool proxy_is_active(void)
+{
+	// Consider proxy active when higher than configured threshold
+	return (get_proxy_data() > proximity_threshold);
+}
+
 static void touchwake_suspend(struct power_suspend * h)
 {
 	#ifdef TOUCHWAKE_DEBUG_PRINT
@@ -82,34 +128,34 @@ static void touchwake_suspend(struct power_suspend * h)
 
 	if (touchwake_enabled) {
 		if (likely(touchoff_delay > 0))	{
-			if (timed_out) {
+			if (timed_out && !proxy_is_active()) {
 				#ifdef TOUCHWAKE_DEBUG_PRINT
 				pr_info("[TOUCHWAKE] Suspend - enable touch delay\n");
 				#endif
-				keep_awake = true; // Keep digitizers awake for now
 				touchscreen_pen_enable(); // Wacom needs to be reactivated
+				touchwake_active = true; // Keep digitizers awake for now
 				wake_lock(&touchwake_wake_lock);
 				schedule_delayed_work(&touchoff_work, msecs_to_jiffies(touchoff_delay));
 			} else {
 				#ifdef TOUCHWAKE_DEBUG_PRINT
 				pr_info("[TOUCHWAKE] Suspend - disable touch immediately\n");
 				#endif
-				keep_awake = false; // Digitizers can be disabled
+				touchwake_active = false; // Digitizers can be disabled
 				touchwake_disable_touch();
 			}
 		} else {
-			if (timed_out) {
+			if (timed_out && !proxy_is_active()) {
 				#ifdef TOUCHWAKE_DEBUG_PRINT
 				pr_info("[TOUCHWAKE] Suspend - keep touch enabled indefinately\n");
 				#endif
-				keep_awake = true; // Keep digitizers awake for now
 				touchscreen_pen_enable(); // Wacom needs to be reactivated
+				touchwake_active = true; // Keep digitizers awake for now
 				wake_lock(&touchwake_wake_lock);
 			} else {
 				#ifdef TOUCHWAKE_DEBUG_PRINT
 				pr_info("[TOUCHWAKE] Suspend - disable touch immediately (indefinate mode)\n");
 				#endif
-				keep_awake = false; // Digitizers can be disabled
+				touchwake_active = false; // Digitizers can be disabled
 				touchwake_disable_touch();
 			}
 		}
@@ -117,7 +163,7 @@ static void touchwake_suspend(struct power_suspend * h)
 		#ifdef TOUCHWAKE_DEBUG_PRINT
 		pr_info("[TOUCHWAKE] Suspend - disable touch immediately (TouchWake disabled)\n");
 		#endif
-		keep_awake = false; // Digitizers can be disabled
+		touchwake_active = false; // Digitizers can be disabled
 		touchwake_disable_touch();
 	}
 
@@ -140,7 +186,7 @@ static void touchwake_resume(struct power_suspend * h)
 	if (touch_disabled)
 		touchwake_enable_touch();
 
-	keep_awake = false; // Digitizers can be disabled
+	touchwake_active = false; // Digitizers can be disabled
 	timed_out = true;
 	device_suspended = false;
 
@@ -155,7 +201,7 @@ static struct power_suspend touchwake_suspend_data =
 
 static void touchwake_touchoff(struct work_struct * touchoff_work)
 {
-	keep_awake = false; // Digitizers can be disabled
+	touchwake_active = false; // Digitizers can be disabled
 	touchwake_disable_touch();
 	wake_unlock(&touchwake_wake_lock);
 
@@ -229,7 +275,7 @@ void touch_press(void)
 	pr_info("[TOUCHWAKE] Touch press detected\n");
 	#endif
 
-	if (unlikely(device_suspended && touchwake_enabled && mutex_trylock(&lock)))
+	if (unlikely(device_suspended && touchwake_enabled && !proxy_is_active() && mutex_trylock(&lock)))
 		schedule_work(&presspower_work);
 
 	return;
@@ -240,9 +286,9 @@ bool device_is_suspended(void)
 	return device_suspended;
 }
 
-bool touchwake_active(void)
+bool touchwake_is_active(void)
 {
-	return keep_awake;
+	return touchwake_active;
 }
 
 // Sysfs start ---------------------------------------------------------------------------------------
@@ -263,13 +309,13 @@ static ssize_t touchwake_status_write(struct device * dev, struct device_attribu
 			#ifdef TOUCHWAKE_DEBUG_PRINT
 			pr_info("[TOUCHWAKE] %s: TOUCHWAKE function enabled\n", __FUNCTION__);
 			#endif
-			keep_awake = false; // Digitizers can be disabled
+			touchwake_active = false; // Digitizers can be disabled
 			touchwake_enabled = true;
 		} else if (data == 0) {
 			#ifdef TOUCHWAKE_DEBUG_PRINT
 			pr_info("[TOUCHWAKE] %s: TOUCHWAKE function disabled\n", __FUNCTION__);
 			#endif
-			keep_awake = false; // Digitizers can be disabled
+			touchwake_active = false; // Digitizers can be disabled
 			touchwake_enabled = false;
 		#ifdef TOUCHWAKE_DEBUG_PRINT
 		} else {
@@ -299,13 +345,38 @@ static ssize_t touchwake_delay_write(struct device * dev, struct device_attribut
 		#ifdef TOUCHWAKE_DEBUG_PRINT
 		pr_info("[TOUCHWAKE] Delay set to %u\n", touchoff_delay); 
 		#endif
-	#ifdef TOUCHWAKE_DEBUG_PRINT
+		return size;
 	} else 	{
+	#ifdef TOUCHWAKE_DEBUG_PRINT
 		pr_info("[TOUCHWAKE] %s: invalid input\n", __FUNCTION__);
 	#endif
+		return -EINVAL;
+	}
+}
+
+static ssize_t touchwake_proximity_threshold_read(struct device * dev, struct device_attribute * attr, char * buf)
+{
+	return sprintf(buf, "%u\n", proximity_threshold);
+}
+
+static ssize_t touchwake_proximity_threshold_write(struct device * dev, struct device_attribute * attr, const char * buf, size_t size)
+{
+	unsigned int data;
+
+	if(sscanf(buf, "%u\n", &data) == 1) {
+		if (data >= 0 && data <= 1004) {
+			proximity_threshold = data;
+			#ifdef TOUCHWAKE_DEBUG_PRINT
+			pr_info("[TOUCHWAKE] Proximity threshold set to %u\n", touchoff_delay); 
+			#endif
+			return size;
+		}
 	}
 
-	return size;
+	#ifdef TOUCHWAKE_DEBUG_PRINT
+	pr_info("[TOUCHWAKE] %s: invalid input (acceptable range : 0-1004)\n", __FUNCTION__);
+	#endif
+	return -EINVAL;
 }
 
 static ssize_t touchwake_version(struct device * dev, struct device_attribute * attr, char * buf)
@@ -316,12 +387,13 @@ static ssize_t touchwake_version(struct device * dev, struct device_attribute * 
 #ifdef TOUCHWAKE_DEBUG_PRINT
 static ssize_t touchwake_debug(struct device * dev, struct device_attribute * attr, char * buf)
 {
-	return sprintf(buf, "timed_out : %u\n", (unsigned int) timed_out);
+	return sprintf(buf, "timed_out : %u / proxy_state : %u (%u)\n", (unsigned int) timed_out, proxy_is_active() ? 1 : 0, (unsigned int) get_proxy_data());
 }
 #endif
 
 static DEVICE_ATTR(enabled, S_IRUGO | S_IWUGO, touchwake_status_read, touchwake_status_write);
 static DEVICE_ATTR(delay, S_IRUGO | S_IWUGO, touchwake_delay_read, touchwake_delay_write);
+static DEVICE_ATTR(proximity_threshold, S_IRUGO | S_IWUGO, touchwake_proximity_threshold_read, touchwake_proximity_threshold_write);
 static DEVICE_ATTR(version, S_IRUGO , touchwake_version, NULL);
 #ifdef TOUCHWAKE_DEBUG_PRINT
 static DEVICE_ATTR(debug, S_IRUGO , touchwake_debug, NULL);
@@ -331,6 +403,7 @@ static struct attribute *touchwake_notification_attributes[] =
 {
 	&dev_attr_enabled.attr,
 	&dev_attr_delay.attr,
+	&dev_attr_proximity_threshold.attr,
 	&dev_attr_version.attr,
 #ifdef TOUCHWAKE_DEBUG_PRINT
 	&dev_attr_debug.attr,
