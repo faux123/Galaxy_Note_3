@@ -84,7 +84,8 @@ static struct mipi_samsung_driver_data *mdnie_msd;
 #define INPUT_PAYLOAD2(x) PAYLOAD2.payload = x
 
 #if defined(CONFIG_MDNIE_LITE_CONTROL)
-int hijack = HIJACK_DISABLED; /* By default, do not hijack STANDARD profile */
+int hijack = HIJACK_ENABLED;
+int curve_select = 0;
 #endif
 
 int play_speed_1_5;
@@ -176,13 +177,13 @@ void print_tun_data(void)
 }
 
 #if defined(CONFIG_MDNIE_LITE_CONTROL)
-void update_mdnie_curve(int source_mode)
+void update_mdnie_curve(void)
 {
 	char	*source;
 	int	i;
 
 	// Determine the source to copy the curves from
-	switch (source_mode) {
+	switch (curve_select) {
 		case DYNAMIC_MODE:	source = DYNAMIC_UI_2;
 					break;
 		case STANDARD_MODE:	source = STANDARD_UI_2;
@@ -948,21 +949,30 @@ static ssize_t hijack_store(struct device * dev, struct device_attribute * attr,
 	}
 }
 
-/* copy_curve */
+/* curve */
 
-static ssize_t copy_curve_store(struct device * dev, struct device_attribute * attr, const char * buf, size_t size)
+static ssize_t curve_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
-    int val;
-	sscanf(buf, "%d", &val);
+    return sprintf(buf, "%d\n", curve_select);
+}
 
-	switch (val) {
+static ssize_t curve_store(struct device * dev, struct device_attribute * attr, const char * buf, size_t size)
+{
+    int new_val;
+	sscanf(buf, "%d", &new_val);
+
+	if (new_val == curve_select)
+			return size;
+
+	switch (new_val) {
 		case DYNAMIC_MODE:
 		case STANDARD_MODE:
 #if !defined(CONFIG_SUPPORT_DISPLAY_OCTA_TFT)
 		case NATURAL_MODE:
 #endif
 		case MOVIE_MODE:
-		case AUTO_MODE:		update_mdnie_curve(val);
+		case AUTO_MODE:	curve_select = new_val;
+					update_mdnie_curve();
 					if (hijack == HIJACK_ENABLED) {
 						mDNIe_Set_Mode(mdnie_tun_state.scenario);
 					}
@@ -975,17 +985,18 @@ static ssize_t copy_curve_store(struct device * dev, struct device_attribute * a
 
 static ssize_t copy_mode_store(struct device * dev, struct device_attribute * attr, const char * buf, size_t size)
 {
-    int val;
-	sscanf(buf, "%d", &val);
+    int new_val;
+	sscanf(buf, "%d", &new_val);
 
-	switch (val) {
+	switch (new_val) {
 		case DYNAMIC_MODE:
 		case STANDARD_MODE:
 #if !defined(CONFIG_SUPPORT_DISPLAY_OCTA_TFT)
 		case NATURAL_MODE:
 #endif
 		case MOVIE_MODE:
-		case AUTO_MODE:		update_mdnie_mode(val);
+		case AUTO_MODE:		curve_select = new_val;
+					update_mdnie_mode(new_val);
 					if (hijack == HIJACK_ENABLED) {
 						mDNIe_Set_Mode(mdnie_tun_state.scenario);
 					}
@@ -1007,7 +1018,7 @@ static ssize_t sharpen_store(struct device * dev, struct device_attribute * attr
 	sscanf(buf, "%d", &new_val);
 
 	if (new_val != LITE_CONTROL_1[4]) {
-		if (new_val < 0 || new_val > 9)
+		if (new_val < 0 || new_val > 11)
 			return -EINVAL;
 		DPRINT("new sharpen: %d\n", new_val);
 		LITE_CONTROL_1[4] = new_val;
@@ -1538,7 +1549,7 @@ static ssize_t white_blue_store(struct device * dev, struct device_attribute * a
 }
 
 static DEVICE_ATTR(hijack, 0664, hijack_show, hijack_store);
-static DEVICE_ATTR(copy_curve, 0220, NULL, copy_curve_store);
+static DEVICE_ATTR(curve, 0664, curve_show, curve_store);
 static DEVICE_ATTR(copy_mode, 0220, NULL, copy_mode_store);
 static DEVICE_ATTR(sharpen, 0664, sharpen_show, sharpen_store);
 static DEVICE_ATTR(red_red, 0664, red_red_show, red_red_store);
@@ -1870,7 +1881,7 @@ void init_mdnie_class(void)
 
 #if defined(CONFIG_MDNIE_LITE_CONTROL)
 	device_create_file(tune_mdnie_dev, &dev_attr_hijack);
-	device_create_file(tune_mdnie_dev, &dev_attr_copy_curve);
+	device_create_file(tune_mdnie_dev, &dev_attr_curve);
 	device_create_file(tune_mdnie_dev, &dev_attr_copy_mode);
 	device_create_file(tune_mdnie_dev, &dev_attr_sharpen);
 	device_create_file(tune_mdnie_dev, &dev_attr_red_red);
