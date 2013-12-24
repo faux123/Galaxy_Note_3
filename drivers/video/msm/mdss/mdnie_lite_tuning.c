@@ -106,11 +106,7 @@ struct mdnie_lite_tun_type mdnie_tun_state = {
 
 const char background_name[MAX_BACKGROUND_MODE][16] = {
 	"DYNAMIC",
-#if defined(CONFIG_MDNIE_LITE_CONTROL)
-	"CONTROL",
-#else
 	"STANDARD",
-#endif
 #if !defined(CONFIG_SUPPORT_DISPLAY_OCTA_TFT)
 	"NATURAL",
 #endif
@@ -205,13 +201,13 @@ void update_mdnie_curve(void)
 	pr_debug(" = update curve values =\n");
 }
 
-void update_mdnie_mode(int source_mode)
+void update_mdnie_mode(void)
 {
 	char	*source_1, *source_2;
 	int	i;
 
 	// Determine the source to copy the mode from
-	switch (source_mode) {
+	switch (curve_select) {
 		case DYNAMIC_MODE:	source_1 = DYNAMIC_UI_1;
 					source_2 = DYNAMIC_UI_2;
 					break;
@@ -309,25 +305,20 @@ void mDNIe_Set_Mode(enum Lcd_mDNIe_UI mode)
 	*	Bline mode has priority than Screen mode
 	*/
 	if (mdnie_tun_state.blind == COLOR_BLIND)
-		mode = mDNIE_BLINE_MODE;
+		mode = mDNIe_BLIND_MODE;
+
+#if defined(CONFIG_MDNIE_LITE_CONTROL)
+	if (hijack == HIJACK_ENABLED)
+		mode = mDNIe_CONTROL_MODE;
+#endif
 
 	switch (mode) {
 	case mDNIe_UI_MODE:
 		DPRINT(" = UI MODE =\n");
 		if (mdnie_tun_state.background == STANDARD_MODE) {
-#ifdef CONFIG_MDNIE_LITE_CONTROL
-			if (hijack == HIJACK_ENABLED) {
-				DPRINT(" = CONTROL MODE =\n");
-				INPUT_PAYLOAD1(LITE_CONTROL_1);
-				INPUT_PAYLOAD2(LITE_CONTROL_2);
-			} else {
-#endif
-				DPRINT(" = STANDARD MODE =\n");
-				INPUT_PAYLOAD1(STANDARD_UI_1);
-				INPUT_PAYLOAD2(STANDARD_UI_2);
-#ifdef CONFIG_MDNIE_LITE_CONTROL
-			}
-#endif
+			DPRINT(" = STANDARD MODE =\n");
+			INPUT_PAYLOAD1(STANDARD_UI_1);
+			INPUT_PAYLOAD2(STANDARD_UI_2);
 #if !defined(CONFIG_SUPPORT_DISPLAY_OCTA_TFT) && !defined(CONFIG_FB_MSM_MIPI_TFT_VIDEO_FULL_HD_PT_PANEL)
 		} else if (mdnie_tun_state.background == NATURAL_MODE) {
 			DPRINT(" = NATURAL MODE =\n");
@@ -358,19 +349,9 @@ void mDNIe_Set_Mode(enum Lcd_mDNIe_UI mode)
 		} else if (mdnie_tun_state.outdoor == OUTDOOR_OFF_MODE) {
 			DPRINT(" = OUTDOOR OFF MODE =\n");
 			if (mdnie_tun_state.background == STANDARD_MODE) {
-#ifdef CONFIG_MDNIE_LITE_CONTROL
-				if (hijack == HIJACK_ENABLED) {
-					DPRINT(" = CONTROL MODE =\n");
-					INPUT_PAYLOAD1(LITE_CONTROL_1);
-					INPUT_PAYLOAD2(LITE_CONTROL_2);
-				} else {
-#endif
-					DPRINT(" = STANDARD MODE =\n");
-					INPUT_PAYLOAD1(STANDARD_VIDEO_1);
-					INPUT_PAYLOAD2(STANDARD_VIDEO_2);
-#ifdef CONFIG_MDNIE_LITE_CONTROL
-				}
-#endif
+				DPRINT(" = STANDARD MODE =\n");
+				INPUT_PAYLOAD1(STANDARD_VIDEO_1);
+				INPUT_PAYLOAD2(STANDARD_VIDEO_2);
 #if !defined(CONFIG_SUPPORT_DISPLAY_OCTA_TFT) && !defined(CONFIG_FB_MSM_MIPI_TFT_VIDEO_FULL_HD_PT_PANEL)
 			} else if (mdnie_tun_state.background == NATURAL_MODE) {
 				DPRINT(" = NATURAL MODE =\n");
@@ -427,19 +408,9 @@ void mDNIe_Set_Mode(enum Lcd_mDNIe_UI mode)
 				INPUT_PAYLOAD1(AUTO_CAMERA_1);
 				INPUT_PAYLOAD2(AUTO_CAMERA_2);
 			} else {
-#ifdef CONFIG_MDNIE_LITE_CONTROL
-				if (hijack == HIJACK_ENABLED) {
-					DPRINT(" = CONTROL MODE =\n");
-					INPUT_PAYLOAD1(LITE_CONTROL_1);
-					INPUT_PAYLOAD2(LITE_CONTROL_2);
-				} else {
-#endif
-					DPRINT(" = STANDARD MODE =\n");
-					INPUT_PAYLOAD1(CAMERA_1);
-					INPUT_PAYLOAD2(CAMERA_2);
-#ifdef CONFIG_MDNIE_LITE_CONTROL
-				}
-#endif
+				DPRINT(" = STANDARD MODE =\n");
+				INPUT_PAYLOAD1(CAMERA_1);
+				INPUT_PAYLOAD2(CAMERA_2);
 			}
 		} else if (mdnie_tun_state.outdoor == OUTDOOR_ON_MODE) {
 			DPRINT(" = NATURAL MODE =\n");
@@ -456,19 +427,9 @@ void mDNIe_Set_Mode(enum Lcd_mDNIe_UI mode)
 	case mDNIe_GALLERY:
 		DPRINT(" = GALLERY MODE =\n");
 		if (mdnie_tun_state.background == STANDARD_MODE) {
-#ifdef CONFIG_MDNIE_LITE_CONTROL
-			if (hijack == HIJACK_ENABLED) {
-				DPRINT(" = CONTROL MODE =\n");
-				INPUT_PAYLOAD1(LITE_CONTROL_1);
-				INPUT_PAYLOAD2(LITE_CONTROL_2);
-			} else {
-#endif
-				DPRINT(" = STANDARD MODE =\n");
-				INPUT_PAYLOAD1(STANDARD_GALLERY_1);
-				INPUT_PAYLOAD2(STANDARD_GALLERY_2);
-#ifdef CONFIG_MDNIE_LITE_CONTROL
-			}
-#endif
+			DPRINT(" = STANDARD MODE =\n");
+			INPUT_PAYLOAD1(STANDARD_GALLERY_1);
+			INPUT_PAYLOAD2(STANDARD_GALLERY_2);
 #if !defined(CONFIG_SUPPORT_DISPLAY_OCTA_TFT) && !defined(CONFIG_FB_MSM_MIPI_TFT_VIDEO_FULL_HD_PT_PANEL)
 		} else if (mdnie_tun_state.background == NATURAL_MODE) {
 			DPRINT(" = NATURAL MODE =\n");
@@ -493,19 +454,9 @@ void mDNIe_Set_Mode(enum Lcd_mDNIe_UI mode)
 	case mDNIe_VT_MODE:
 		DPRINT(" = VT MODE =\n");
 		if (mdnie_tun_state.background == STANDARD_MODE) {
-#ifdef CONFIG_MDNIE_LITE_CONTROL
-			if (hijack == HIJACK_ENABLED) {
-				DPRINT(" = CONTROL MODE =\n");
-				INPUT_PAYLOAD1(LITE_CONTROL_1);
-				INPUT_PAYLOAD2(LITE_CONTROL_2);
-			} else {
-#endif
-				DPRINT(" = STANDARD MODE =\n");
-				INPUT_PAYLOAD1(STANDARD_VT_1);
-				INPUT_PAYLOAD2(STANDARD_VT_2);
-#ifdef CONFIG_MDNIE_LITE_CONTROL
-			}
-#endif
+			DPRINT(" = STANDARD MODE =\n");
+			INPUT_PAYLOAD1(STANDARD_VT_1);
+			INPUT_PAYLOAD2(STANDARD_VT_2);
 #if !defined(CONFIG_SUPPORT_DISPLAY_OCTA_TFT) && !defined(CONFIG_FB_MSM_MIPI_TFT_VIDEO_FULL_HD_PT_PANEL)
 		} else if (mdnie_tun_state.background == NATURAL_MODE) {
 			DPRINT(" = NATURAL MODE =\n");
@@ -537,19 +488,9 @@ void mDNIe_Set_Mode(enum Lcd_mDNIe_UI mode)
 		} else if (mdnie_tun_state.outdoor == OUTDOOR_OFF_MODE) {
 			DPRINT(" = OUTDOOR OFF MODE =\n");
 			if (mdnie_tun_state.background == STANDARD_MODE) {
-#ifdef CONFIG_MDNIE_LITE_CONTROL
-				if (hijack == HIJACK_ENABLED) {
-					DPRINT(" = CONTROL MODE =\n");
-					INPUT_PAYLOAD1(LITE_CONTROL_1);
-					INPUT_PAYLOAD2(LITE_CONTROL_2);
-				} else {
-#endif
-					DPRINT(" = STANDARD MODE =\n");
-					INPUT_PAYLOAD1(STANDARD_DMB_1);
-					INPUT_PAYLOAD2(STANDARD_DMB_2);
-#ifdef CONFIG_MDNIE_LITE_CONTROL
-				}
-#endif
+				DPRINT(" = STANDARD MODE =\n");
+				INPUT_PAYLOAD1(STANDARD_DMB_1);
+				INPUT_PAYLOAD2(STANDARD_DMB_2);
 #if !defined(CONFIG_SUPPORT_DISPLAY_OCTA_TFT) && !defined(CONFIG_FB_MSM_MIPI_TFT_VIDEO_FULL_HD_PT_PANEL)
 			} else if (mdnie_tun_state.background == NATURAL_MODE) {
 				DPRINT(" = NATURAL MODE =\n");
@@ -602,19 +543,9 @@ void mDNIe_Set_Mode(enum Lcd_mDNIe_UI mode)
 	case mDNIe_BROWSER_MODE:
 		DPRINT(" = BROWSER MODE =\n");
 		if (mdnie_tun_state.background == STANDARD_MODE) {
-#ifdef CONFIG_MDNIE_LITE_CONTROL
-			if (hijack == HIJACK_ENABLED) {
-				DPRINT(" = CONTROL MODE =\n");
-				INPUT_PAYLOAD1(LITE_CONTROL_1);
-				INPUT_PAYLOAD2(LITE_CONTROL_2);
-			} else {
-#endif
-				DPRINT(" = STANDARD MODE =\n");
-				INPUT_PAYLOAD1(STANDARD_BROWSER_1);
-				INPUT_PAYLOAD2(STANDARD_BROWSER_2);
-#ifdef CONFIG_MDNIE_LITE_CONTROL
-			}
-#endif
+			DPRINT(" = STANDARD MODE =\n");
+			INPUT_PAYLOAD1(STANDARD_BROWSER_1);
+			INPUT_PAYLOAD2(STANDARD_BROWSER_2);
 #if !defined(CONFIG_SUPPORT_DISPLAY_OCTA_TFT) && !defined(CONFIG_FB_MSM_MIPI_TFT_VIDEO_FULL_HD_PT_PANEL)
 		} else if (mdnie_tun_state.background == NATURAL_MODE) {
 			DPRINT(" = NATURAL MODE =\n");
@@ -639,19 +570,9 @@ void mDNIe_Set_Mode(enum Lcd_mDNIe_UI mode)
 	case mDNIe_eBOOK_MODE:
 		DPRINT(" = eBOOK MODE =\n");
 		if (mdnie_tun_state.background == STANDARD_MODE) {
-#ifdef CONFIG_MDNIE_LITE_CONTROL
-			if (hijack == HIJACK_ENABLED) {
-				DPRINT(" = CONTROL MODE =\n");
-				INPUT_PAYLOAD1(LITE_CONTROL_1);
-				INPUT_PAYLOAD2(LITE_CONTROL_2);
-			} else {
-#endif
-				DPRINT(" = STANDARD MODE =\n");
-				INPUT_PAYLOAD1(STANDARD_EBOOK_1);
-				INPUT_PAYLOAD2(STANDARD_EBOOK_2);
-#ifdef CONFIG_MDNIE_LITE_CONTROL
-			}
-#endif
+			DPRINT(" = STANDARD MODE =\n");
+			INPUT_PAYLOAD1(STANDARD_EBOOK_1);
+			INPUT_PAYLOAD2(STANDARD_EBOOK_2);
 #if !defined(CONFIG_SUPPORT_DISPLAY_OCTA_TFT) && !defined(CONFIG_FB_MSM_MIPI_TFT_VIDEO_FULL_HD_PT_PANEL)
 		} else if (mdnie_tun_state.background == NATURAL_MODE) {
 			DPRINT(" = NATURAL MODE =\n");
@@ -677,19 +598,9 @@ void mDNIe_Set_Mode(enum Lcd_mDNIe_UI mode)
 	case mDNIe_EMAIL_MODE:
 		DPRINT(" = EMAIL MODE =\n");
 		if (mdnie_tun_state.background == STANDARD_MODE) {
-#ifdef CONFIG_MDNIE_LITE_CONTROL
-			if (hijack == HIJACK_ENABLED) {
-				DPRINT(" = CONTROL MODE =\n");
-				INPUT_PAYLOAD1(LITE_CONTROL_1);
-				INPUT_PAYLOAD2(LITE_CONTROL_2);
-			} else {
-#endif
-				DPRINT(" = STANDARD MODE =\n");
-				INPUT_PAYLOAD1(AUTO_EMAIL_1);
-				INPUT_PAYLOAD2(AUTO_EMAIL_2);
-#ifdef CONFIG_MDNIE_LITE_CONTROL
-			}
-#endif
+			DPRINT(" = STANDARD MODE =\n");
+			INPUT_PAYLOAD1(AUTO_EMAIL_1);
+			INPUT_PAYLOAD2(AUTO_EMAIL_2);
 		} else if (mdnie_tun_state.background == NATURAL_MODE) {
 			DPRINT(" = NATURAL MODE =\n");
 			INPUT_PAYLOAD1(AUTO_EMAIL_1);
@@ -710,11 +621,19 @@ void mDNIe_Set_Mode(enum Lcd_mDNIe_UI mode)
 		break;
 #endif
 
-	case mDNIE_BLINE_MODE:
+	case mDNIe_BLIND_MODE:
 		DPRINT(" = BLIND MODE =\n");
 		INPUT_PAYLOAD1(COLOR_BLIND_1);
 		INPUT_PAYLOAD2(COLOR_BLIND_2);
 		break;
+
+#if defined(CONFIG_MDNIE_LITE_CONTROL)
+	case mDNIe_CONTROL_MODE:
+		DPRINT(" = CONTROL MODE =\n");
+		INPUT_PAYLOAD1(LITE_CONTROL_1);
+		INPUT_PAYLOAD2(LITE_CONTROL_2);
+		break;
+#endif
 
 	default:
 		DPRINT("[%s] no option (%d)\n", __func__, mode);
@@ -996,7 +915,7 @@ static ssize_t copy_mode_store(struct device * dev, struct device_attribute * at
 #endif
 		case MOVIE_MODE:
 		case AUTO_MODE:		curve_select = new_val;
-					update_mdnie_mode(new_val);
+					update_mdnie_mode();
 					if (hijack == HIJACK_ENABLED) {
 						mDNIe_Set_Mode(mdnie_tun_state.scenario);
 					}
@@ -2008,14 +1927,12 @@ void coordinate_tunning(int x, int y)
 	memcpy(&DYNAMIC_VT_2[scr_wr_addr], &coordinate_data[tune_number][0], coordinate_data_size);
 	memcpy(&DYNAMIC_EBOOK_2[scr_wr_addr], &coordinate_data[tune_number][0], coordinate_data_size);
 
-#if !defined(CONFIG_MDNIE_LITE_CONTROL)
 	memcpy(&STANDARD_BROWSER_2[scr_wr_addr], &coordinate_data[tune_number][0], coordinate_data_size);
 	memcpy(&STANDARD_GALLERY_2[scr_wr_addr], &coordinate_data[tune_number][0], coordinate_data_size);
 	memcpy(&STANDARD_UI_2[scr_wr_addr], &coordinate_data[tune_number][0], coordinate_data_size);
 	memcpy(&STANDARD_VIDEO_2[scr_wr_addr], &coordinate_data[tune_number][0], coordinate_data_size);
 	memcpy(&STANDARD_VT_2[scr_wr_addr], &coordinate_data[tune_number][0], coordinate_data_size);
 	memcpy(&STANDARD_EBOOK_2[scr_wr_addr], &coordinate_data[tune_number][0], coordinate_data_size);
-#endif
 
 	memcpy(&AUTO_BROWSER_2[scr_wr_addr], &coordinate_data[tune_number][0], coordinate_data_size);
 	memcpy(&AUTO_CAMERA_2[scr_wr_addr], &coordinate_data[tune_number][0], coordinate_data_size);
@@ -2024,8 +1941,5 @@ void coordinate_tunning(int x, int y)
 	memcpy(&AUTO_VIDEO_2[scr_wr_addr], &coordinate_data[tune_number][0], coordinate_data_size);
 	memcpy(&AUTO_VT_2[scr_wr_addr], &coordinate_data[tune_number][0], coordinate_data_size);
 
-#if !defined(CONFIG_MDNIE_LITE_CONTROL)
 	memcpy(&CAMERA_2[scr_wr_addr], &coordinate_data[tune_number][0], coordinate_data_size);
-#endif
-
 }
