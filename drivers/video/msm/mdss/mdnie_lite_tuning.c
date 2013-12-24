@@ -85,7 +85,8 @@ static struct mipi_samsung_driver_data *mdnie_msd;
 
 #if defined(CONFIG_MDNIE_LITE_CONTROL)
 int hijack = HIJACK_ENABLED;
-int curve_select = 0;
+int curve = 0;
+int black = 0;
 #endif
 
 int play_speed_1_5;
@@ -179,7 +180,7 @@ void update_mdnie_curve(void)
 	int	i;
 
 	// Determine the source to copy the curves from
-	switch (curve_select) {
+	switch (curve) {
 		case DYNAMIC_MODE:	source = DYNAMIC_UI_2;
 					break;
 		case STANDARD_MODE:	source = STANDARD_UI_2;
@@ -207,7 +208,7 @@ void update_mdnie_mode(void)
 	int	i;
 
 	// Determine the source to copy the mode from
-	switch (curve_select) {
+	switch (curve) {
 		case DYNAMIC_MODE:	source_1 = DYNAMIC_UI_1;
 					source_2 = DYNAMIC_UI_2;
 					break;
@@ -843,8 +844,6 @@ static ssize_t scenario_store(struct device *dev,
 	}
 	return size;
 }
-static DEVICE_ATTR(scenario, 0664, scenario_show,
-		   scenario_store);
 
 #if defined(CONFIG_MDNIE_LITE_CONTROL)
 /* hijack */
@@ -872,7 +871,7 @@ static ssize_t hijack_store(struct device * dev, struct device_attribute * attr,
 
 static ssize_t curve_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
-    return sprintf(buf, "%d\n", curve_select);
+    return sprintf(buf, "%d\n", curve);
 }
 
 static ssize_t curve_store(struct device * dev, struct device_attribute * attr, const char * buf, size_t size)
@@ -880,7 +879,7 @@ static ssize_t curve_store(struct device * dev, struct device_attribute * attr, 
     int new_val;
 	sscanf(buf, "%d", &new_val);
 
-	if (new_val == curve_select)
+	if (new_val == curve)
 			return size;
 
 	switch (new_val) {
@@ -890,7 +889,7 @@ static ssize_t curve_store(struct device * dev, struct device_attribute * attr, 
 		case NATURAL_MODE:
 #endif
 		case MOVIE_MODE:
-		case AUTO_MODE:	curve_select = new_val;
+		case AUTO_MODE:	curve = new_val;
 					update_mdnie_curve();
 					if (hijack == HIJACK_ENABLED) {
 						mDNIe_Set_Mode(mdnie_tun_state.scenario);
@@ -914,7 +913,7 @@ static ssize_t copy_mode_store(struct device * dev, struct device_attribute * at
 		case NATURAL_MODE:
 #endif
 		case MOVIE_MODE:
-		case AUTO_MODE:		curve_select = new_val;
+		case AUTO_MODE:		curve = new_val;
 					update_mdnie_mode();
 					if (hijack == HIJACK_ENABLED) {
 						mDNIe_Set_Mode(mdnie_tun_state.scenario);
@@ -1339,6 +1338,30 @@ static ssize_t yellow_blue_store(struct device * dev, struct device_attribute * 
 
 /* black */
 
+static ssize_t black_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+    return sprintf(buf, "%d\n", black);
+}
+
+static ssize_t black_store(struct device * dev, struct device_attribute * attr, const char * buf, size_t size)
+{
+    int new_val;
+	sscanf(buf, "%d", &new_val);
+
+	if (new_val != black) {
+		if (new_val < 0 || new_val > 255)
+			return -EINVAL;
+		DPRINT("new black: %d\n", new_val);
+		black = new_val;
+		LITE_CONTROL_2[37] = new_val;
+		LITE_CONTROL_2[39] = new_val;
+		LITE_CONTROL_2[41] = new_val;
+		if (hijack == HIJACK_ENABLED)
+			mDNIe_Set_Mode(mdnie_tun_state.scenario);
+	}
+    return size;
+}
+
 static ssize_t black_red_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
     return sprintf(buf, "%d\n", LITE_CONTROL_2[37]);
@@ -1354,6 +1377,7 @@ static ssize_t black_red_store(struct device * dev, struct device_attribute * at
 			return -EINVAL;
 		DPRINT("new black_red: %d\n", new_val);
 		LITE_CONTROL_2[37] = new_val;
+		black = 0;
 		if (hijack == HIJACK_ENABLED)
 			mDNIe_Set_Mode(mdnie_tun_state.scenario);
 	}
@@ -1375,6 +1399,7 @@ static ssize_t black_green_store(struct device * dev, struct device_attribute * 
 			return -EINVAL;
 		DPRINT("new black_green: %d\n", new_val);
 		LITE_CONTROL_2[39] = new_val;
+		black = 0;
 		if (hijack == HIJACK_ENABLED)
 			mDNIe_Set_Mode(mdnie_tun_state.scenario);
 	}
@@ -1396,6 +1421,7 @@ static ssize_t black_blue_store(struct device * dev, struct device_attribute * a
 			return -EINVAL;
 		DPRINT("new black_blue: %d\n", new_val);
 		LITE_CONTROL_2[41] = new_val;
+		black = 0;
 		if (hijack == HIJACK_ENABLED)
 			mDNIe_Set_Mode(mdnie_tun_state.scenario);
 	}
@@ -1489,6 +1515,7 @@ static DEVICE_ATTR(blue_blue, 0664, blue_blue_show, blue_blue_store);
 static DEVICE_ATTR(yellow_red, 0664, yellow_red_show, yellow_red_store);
 static DEVICE_ATTR(yellow_green, 0664, yellow_green_show, yellow_green_store);
 static DEVICE_ATTR(yellow_blue, 0664, yellow_blue_show, yellow_blue_store);
+static DEVICE_ATTR(black, 0664, black_show, black_store);
 static DEVICE_ATTR(black_red, 0664, black_red_show, black_red_store);
 static DEVICE_ATTR(black_green, 0664, black_green_show, black_green_store);
 static DEVICE_ATTR(black_blue, 0664, black_blue_show, black_blue_store);
@@ -1496,6 +1523,8 @@ static DEVICE_ATTR(white_red, 0664, white_red_show, white_red_store);
 static DEVICE_ATTR(white_green, 0664, white_green_show, white_green_store);
 static DEVICE_ATTR(white_blue, 0664, white_blue_show, white_blue_store);
 #endif
+
+static DEVICE_ATTR(scenario, 0664, scenario_show, scenario_store);
 
 static ssize_t mdnieset_user_select_file_cmd_show(struct device *dev,
 						  struct device_attribute *attr,
@@ -1821,6 +1850,7 @@ void init_mdnie_class(void)
 	device_create_file(tune_mdnie_dev, &dev_attr_yellow_red);
 	device_create_file(tune_mdnie_dev, &dev_attr_yellow_green);
 	device_create_file(tune_mdnie_dev, &dev_attr_yellow_blue);
+	device_create_file(tune_mdnie_dev, &dev_attr_black);
 	device_create_file(tune_mdnie_dev, &dev_attr_black_red);
 	device_create_file(tune_mdnie_dev, &dev_attr_black_green);
 	device_create_file(tune_mdnie_dev, &dev_attr_black_blue);
