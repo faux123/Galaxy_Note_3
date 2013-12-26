@@ -87,6 +87,9 @@ static struct mipi_samsung_driver_data *mdnie_msd;
 int hijack = HIJACK_ENABLED;
 int curve = 0;
 int black = 0;
+int black_r = 0;
+int black_g = 0;
+int black_b = 0;
 #endif
 
 int play_speed_1_5;
@@ -233,6 +236,11 @@ void update_mdnie_mode(void)
 
 	for (i = 18; i < 107; i++)
 		LITE_CONTROL_2[i] = source_2[i]; // Copy mode
+
+	// Apply black crush delta
+	LITE_CONTROL_2[37] = max(0,min(255, LITE_CONTROL_2[37] + black));
+	LITE_CONTROL_2[39] = max(0,min(255, LITE_CONTROL_2[39] + black));
+	LITE_CONTROL_2[41] = max(0,min(255, LITE_CONTROL_2[41] + black));
 
 	pr_debug(" = update mode values =\n");
 }
@@ -850,12 +858,12 @@ static ssize_t scenario_store(struct device *dev,
 
 static ssize_t hijack_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
-    return sprintf(buf, "%d\n", hijack);
+	return sprintf(buf, "%d\n", hijack);
 }
 
 static ssize_t hijack_store(struct device * dev, struct device_attribute * attr, const char * buf, size_t size)
 {
-    int new_val;
+	int new_val;
 	sscanf(buf, "%d", &new_val);
 
 	switch (new_val) {
@@ -871,12 +879,12 @@ static ssize_t hijack_store(struct device * dev, struct device_attribute * attr,
 
 static ssize_t curve_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
-    return sprintf(buf, "%d\n", curve);
+	return sprintf(buf, "%d\n", curve);
 }
 
 static ssize_t curve_store(struct device * dev, struct device_attribute * attr, const char * buf, size_t size)
 {
-    int new_val;
+	int new_val;
 	sscanf(buf, "%d", &new_val);
 
 	if (new_val == curve)
@@ -903,7 +911,7 @@ static ssize_t curve_store(struct device * dev, struct device_attribute * attr, 
 
 static ssize_t copy_mode_store(struct device * dev, struct device_attribute * attr, const char * buf, size_t size)
 {
-    int new_val;
+	int new_val;
 	sscanf(buf, "%d", &new_val);
 
 	switch (new_val) {
@@ -927,12 +935,12 @@ static ssize_t copy_mode_store(struct device * dev, struct device_attribute * at
 
 static ssize_t sharpen_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
-    return sprintf(buf, "%d\n", LITE_CONTROL_1[4]);
+	return sprintf(buf, "%d\n", LITE_CONTROL_1[4]);
 }
 
 static ssize_t sharpen_store(struct device * dev, struct device_attribute * attr, const char * buf, size_t size)
 {
-    int new_val;
+	int new_val;
 	sscanf(buf, "%d", &new_val);
 
 	if (new_val != LITE_CONTROL_1[4]) {
@@ -943,19 +951,19 @@ static ssize_t sharpen_store(struct device * dev, struct device_attribute * attr
 		if (hijack == HIJACK_ENABLED)
 			mDNIe_Set_Mode(mdnie_tun_state.scenario);
 	}
-    return size;
+	return size;
 }
 
 /* red */
 
 static ssize_t red_red_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
-    return sprintf(buf, "%d\n", LITE_CONTROL_2[19]);
+	return sprintf(buf, "%d\n", LITE_CONTROL_2[19]);
 }
 
 static ssize_t red_red_store(struct device * dev, struct device_attribute * attr, const char * buf, size_t size)
 {
-    int new_val;
+	int new_val;
 	sscanf(buf, "%d", &new_val);
 
 	if (new_val != LITE_CONTROL_2[19]) {
@@ -966,17 +974,17 @@ static ssize_t red_red_store(struct device * dev, struct device_attribute * attr
 		if (hijack == HIJACK_ENABLED)
 			mDNIe_Set_Mode(mdnie_tun_state.scenario);
 	}
-    return size;
+	return size;
 }
 
 static ssize_t red_green_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
-    return sprintf(buf, "%d\n", LITE_CONTROL_2[21]);
+	return sprintf(buf, "%d\n", LITE_CONTROL_2[21]);
 }
 
 static ssize_t red_green_store(struct device * dev, struct device_attribute * attr, const char * buf, size_t size)
 {
-    int new_val;
+	int new_val;
 	sscanf(buf, "%d", &new_val);
 
 	if (new_val != LITE_CONTROL_2[21]) {
@@ -987,17 +995,17 @@ static ssize_t red_green_store(struct device * dev, struct device_attribute * at
 		if (hijack == HIJACK_ENABLED)
 			mDNIe_Set_Mode(mdnie_tun_state.scenario);
 	}
-    return size;
+	return size;
 }
 
 static ssize_t red_blue_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
-    return sprintf(buf, "%d\n", LITE_CONTROL_2[23]);
+	return sprintf(buf, "%d\n", LITE_CONTROL_2[23]);
 }
 
 static ssize_t red_blue_store(struct device * dev, struct device_attribute * attr, const char * buf, size_t size)
 {
-    int new_val;
+	int new_val;
 	sscanf(buf, "%d", &new_val);
 
 	if (new_val != LITE_CONTROL_2[23]) {
@@ -1008,19 +1016,19 @@ static ssize_t red_blue_store(struct device * dev, struct device_attribute * att
 		if (hijack == HIJACK_ENABLED)
 			mDNIe_Set_Mode(mdnie_tun_state.scenario);
 	}
-    return size;
+	return size;
 }
 
 /* cyan */
 
 static ssize_t cyan_red_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
-    return sprintf(buf, "%d\n", LITE_CONTROL_2[18]);
+	return sprintf(buf, "%d\n", LITE_CONTROL_2[18]);
 }
 
 static ssize_t cyan_red_store(struct device * dev, struct device_attribute * attr, const char * buf, size_t size)
 {
-    int new_val;
+	int new_val;
 	sscanf(buf, "%d", &new_val);
 
 	if (new_val != LITE_CONTROL_2[18]) {
@@ -1031,12 +1039,12 @@ static ssize_t cyan_red_store(struct device * dev, struct device_attribute * att
 		if (hijack == HIJACK_ENABLED)
 			mDNIe_Set_Mode(mdnie_tun_state.scenario);
 	}
-    return size;
+	return size;
 }
 
 static ssize_t cyan_green_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
-    return sprintf(buf, "%d\n", LITE_CONTROL_2[20]);
+	return sprintf(buf, "%d\n", LITE_CONTROL_2[20]);
 }
 
 static ssize_t cyan_green_store(struct device * dev, struct device_attribute * attr, const char * buf, size_t size)
@@ -1052,17 +1060,17 @@ static ssize_t cyan_green_store(struct device * dev, struct device_attribute * a
 		if (hijack == HIJACK_ENABLED)
 			mDNIe_Set_Mode(mdnie_tun_state.scenario);
 	}
-    return size;
+	return size;
 }
 
 static ssize_t cyan_blue_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
-    return sprintf(buf, "%d\n", LITE_CONTROL_2[22]);
+	return sprintf(buf, "%d\n", LITE_CONTROL_2[22]);
 }
 
 static ssize_t cyan_blue_store(struct device * dev, struct device_attribute * attr, const char * buf, size_t size)
 {
-    int new_val;
+	int new_val;
 	sscanf(buf, "%d", &new_val);
 
 	if (new_val != LITE_CONTROL_2[22]) {
@@ -1073,19 +1081,19 @@ static ssize_t cyan_blue_store(struct device * dev, struct device_attribute * at
 		if (hijack == HIJACK_ENABLED)
 			mDNIe_Set_Mode(mdnie_tun_state.scenario);
 	}
-    return size;
+	return size;
 }
 
 /* green */
 
 static ssize_t green_red_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
-    return sprintf(buf, "%d\n", LITE_CONTROL_2[25]);
+	return sprintf(buf, "%d\n", LITE_CONTROL_2[25]);
 }
 
 static ssize_t green_red_store(struct device * dev, struct device_attribute * attr, const char * buf, size_t size)
 {
-    int new_val;
+	int new_val;
 	sscanf(buf, "%d", &new_val);
 
 	if (new_val != LITE_CONTROL_2[25]) {
@@ -1096,17 +1104,17 @@ static ssize_t green_red_store(struct device * dev, struct device_attribute * at
 		if (hijack == HIJACK_ENABLED)
 			mDNIe_Set_Mode(mdnie_tun_state.scenario);
 	}
-    return size;
+	return size;
 }
 
 static ssize_t green_green_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
-    return sprintf(buf, "%d\n", LITE_CONTROL_2[27]);
+	return sprintf(buf, "%d\n", LITE_CONTROL_2[27]);
 }
 
 static ssize_t green_green_store(struct device * dev, struct device_attribute * attr, const char * buf, size_t size)
 {
-    int new_val;
+	int new_val;
 	sscanf(buf, "%d", &new_val);
 
 	if (new_val != LITE_CONTROL_2[27]) {
@@ -1117,17 +1125,17 @@ static ssize_t green_green_store(struct device * dev, struct device_attribute * 
 		if (hijack == HIJACK_ENABLED)
 			mDNIe_Set_Mode(mdnie_tun_state.scenario);
 	}
-    return size;
+	return size;
 }
 
 static ssize_t green_blue_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
-    return sprintf(buf, "%d\n", LITE_CONTROL_2[29]);
+	return sprintf(buf, "%d\n", LITE_CONTROL_2[29]);
 }
 
 static ssize_t green_blue_store(struct device * dev, struct device_attribute * attr, const char * buf, size_t size)
 {
-    int new_val;
+	int new_val;
 	sscanf(buf, "%d", &new_val);
 
 	if (new_val != LITE_CONTROL_2[29]) {
@@ -1138,19 +1146,19 @@ static ssize_t green_blue_store(struct device * dev, struct device_attribute * a
 		if (hijack == HIJACK_ENABLED)
 			mDNIe_Set_Mode(mdnie_tun_state.scenario);
 	}
-    return size;
+	return size;
 }
 
 /* magenta */
 
 static ssize_t magenta_red_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
-    return sprintf(buf, "%d\n", LITE_CONTROL_2[24]);
+	return sprintf(buf, "%d\n", LITE_CONTROL_2[24]);
 }
 
 static ssize_t magenta_red_store(struct device * dev, struct device_attribute * attr, const char * buf, size_t size)
 {
-    int new_val;
+	int new_val;
 	sscanf(buf, "%d", &new_val);
 
 	if (new_val != LITE_CONTROL_2[24]) {
@@ -1161,17 +1169,17 @@ static ssize_t magenta_red_store(struct device * dev, struct device_attribute * 
 		if (hijack == HIJACK_ENABLED)
 			mDNIe_Set_Mode(mdnie_tun_state.scenario);
 	}
-    return size;
+	return size;
 }
 
 static ssize_t magenta_green_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
-    return sprintf(buf, "%d\n", LITE_CONTROL_2[26]);
+	return sprintf(buf, "%d\n", LITE_CONTROL_2[26]);
 }
 
 static ssize_t magenta_green_store(struct device * dev, struct device_attribute * attr, const char * buf, size_t size)
 {
-    int new_val;
+	int new_val;
 	sscanf(buf, "%d", &new_val);
 
 	if (new_val != LITE_CONTROL_2[26]) {
@@ -1182,17 +1190,17 @@ static ssize_t magenta_green_store(struct device * dev, struct device_attribute 
 		if (hijack == HIJACK_ENABLED)
 			mDNIe_Set_Mode(mdnie_tun_state.scenario);
 	}
-    return size;
+	return size;
 }
 
 static ssize_t magenta_blue_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
-    return sprintf(buf, "%d\n", LITE_CONTROL_2[28]);
+	return sprintf(buf, "%d\n", LITE_CONTROL_2[28]);
 }
 
 static ssize_t magenta_blue_store(struct device * dev, struct device_attribute * attr, const char * buf, size_t size)
 {
-    int new_val;
+	int new_val;
 	sscanf(buf, "%d", &new_val);
 
 	if (new_val != LITE_CONTROL_2[28]) {
@@ -1203,19 +1211,19 @@ static ssize_t magenta_blue_store(struct device * dev, struct device_attribute *
 		if (hijack == HIJACK_ENABLED)
 			mDNIe_Set_Mode(mdnie_tun_state.scenario);
 	}
-    return size;
+	return size;
 }
 
 /* blue */
 
 static ssize_t blue_red_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
-    return sprintf(buf, "%d\n", LITE_CONTROL_2[31]);
+	return sprintf(buf, "%d\n", LITE_CONTROL_2[31]);
 }
 
 static ssize_t blue_red_store(struct device * dev, struct device_attribute * attr, const char * buf, size_t size)
 {
-    int new_val;
+	int new_val;
 	sscanf(buf, "%d", &new_val);
 
 	if (new_val != LITE_CONTROL_2[31]) {
@@ -1226,17 +1234,17 @@ static ssize_t blue_red_store(struct device * dev, struct device_attribute * att
 		if (hijack == HIJACK_ENABLED)
 			mDNIe_Set_Mode(mdnie_tun_state.scenario);
 	}
-    return size;
+	return size;
 }
 
 static ssize_t blue_green_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
-    return sprintf(buf, "%d\n", LITE_CONTROL_2[33]);
+	return sprintf(buf, "%d\n", LITE_CONTROL_2[33]);
 }
 
 static ssize_t blue_green_store(struct device * dev, struct device_attribute * attr, const char * buf, size_t size)
 {
-    int new_val;
+	int new_val;
 	sscanf(buf, "%d", &new_val);
 
 	if (new_val != LITE_CONTROL_2[33]) {
@@ -1247,17 +1255,17 @@ static ssize_t blue_green_store(struct device * dev, struct device_attribute * a
 		if (hijack == HIJACK_ENABLED)
 			mDNIe_Set_Mode(mdnie_tun_state.scenario);
 	}
-    return size;
+	return size;
 }
 
 static ssize_t blue_blue_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
-    return sprintf(buf, "%d\n", LITE_CONTROL_2[35]);
+	return sprintf(buf, "%d\n", LITE_CONTROL_2[35]);
 }
 
 static ssize_t blue_blue_store(struct device * dev, struct device_attribute * attr, const char * buf, size_t size)
 {
-    int new_val;
+	int new_val;
 	sscanf(buf, "%d", &new_val);
 
 	if (new_val != LITE_CONTROL_2[35]) {
@@ -1268,19 +1276,19 @@ static ssize_t blue_blue_store(struct device * dev, struct device_attribute * at
 		if (hijack == HIJACK_ENABLED)
 			mDNIe_Set_Mode(mdnie_tun_state.scenario);
 	}
-    return size;
+	return size;
 }
 
 /* yellow */
 
 static ssize_t yellow_red_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
-    return sprintf(buf, "%d\n", LITE_CONTROL_2[30]);
+	return sprintf(buf, "%d\n", LITE_CONTROL_2[30]);
 }
 
 static ssize_t yellow_red_store(struct device * dev, struct device_attribute * attr, const char * buf, size_t size)
 {
-    int new_val;
+	int new_val;
 	sscanf(buf, "%d", &new_val);
 
 	if (new_val != LITE_CONTROL_2[30]) {
@@ -1291,17 +1299,17 @@ static ssize_t yellow_red_store(struct device * dev, struct device_attribute * a
 		if (hijack == HIJACK_ENABLED)
 			mDNIe_Set_Mode(mdnie_tun_state.scenario);
 	}
-    return size;
+	return size;
 }
 
 static ssize_t yellow_green_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
-    return sprintf(buf, "%d\n", LITE_CONTROL_2[32]);
+	return sprintf(buf, "%d\n", LITE_CONTROL_2[32]);
 }
 
 static ssize_t yellow_green_store(struct device * dev, struct device_attribute * attr, const char * buf, size_t size)
 {
-    int new_val;
+	int new_val;
 	sscanf(buf, "%d", &new_val);
 
 	if (new_val != LITE_CONTROL_2[32]) {
@@ -1312,17 +1320,17 @@ static ssize_t yellow_green_store(struct device * dev, struct device_attribute *
 		if (hijack == HIJACK_ENABLED)
 			mDNIe_Set_Mode(mdnie_tun_state.scenario);
 	}
-    return size;
+	return size;
 }
 
 static ssize_t yellow_blue_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
-    return sprintf(buf, "%d\n", LITE_CONTROL_2[34]);
+	return sprintf(buf, "%d\n", LITE_CONTROL_2[34]);
 }
 
 static ssize_t yellow_blue_store(struct device * dev, struct device_attribute * attr, const char * buf, size_t size)
 {
-    int new_val;
+	int new_val;
 	sscanf(buf, "%d", &new_val);
 
 	if (new_val != LITE_CONTROL_2[34]) {
@@ -1333,111 +1341,111 @@ static ssize_t yellow_blue_store(struct device * dev, struct device_attribute * 
 		if (hijack == HIJACK_ENABLED)
 			mDNIe_Set_Mode(mdnie_tun_state.scenario);
 	}
-    return size;
+	return size;
 }
 
 /* black */
 
 static ssize_t black_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
-    return sprintf(buf, "%d\n", black);
+	return sprintf(buf, "%d\n", black);
 }
 
 static ssize_t black_store(struct device * dev, struct device_attribute * attr, const char * buf, size_t size)
 {
-    int new_val;
+	int new_val;
 	sscanf(buf, "%d", &new_val);
 
 	if (new_val != black) {
-		if (new_val < 0 || new_val > 255)
+		if (new_val < -128 || new_val > 128)
 			return -EINVAL;
 		DPRINT("new black: %d\n", new_val);
 		black = new_val;
-		LITE_CONTROL_2[37] = new_val;
-		LITE_CONTROL_2[39] = new_val;
-		LITE_CONTROL_2[41] = new_val;
+		LITE_CONTROL_2[37] = max(0,min(255, black_r + black));
+		LITE_CONTROL_2[39] = max(0,min(255, black_g + black));
+		LITE_CONTROL_2[41] = max(0,min(255, black_b + black));
 		if (hijack == HIJACK_ENABLED)
 			mDNIe_Set_Mode(mdnie_tun_state.scenario);
 	}
-    return size;
+	return size;
 }
 
 static ssize_t black_red_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
-    return sprintf(buf, "%d\n", LITE_CONTROL_2[37]);
+	return sprintf(buf, "%d\n", black_r);
 }
 
 static ssize_t black_red_store(struct device * dev, struct device_attribute * attr, const char * buf, size_t size)
 {
-    int new_val;
+	int new_val;
 	sscanf(buf, "%d", &new_val);
 
-	if (new_val != LITE_CONTROL_2[37]) {
+	if (new_val != black_r) {
 		if (new_val < 0 || new_val > 255)
 			return -EINVAL;
 		DPRINT("new black_red: %d\n", new_val);
-		LITE_CONTROL_2[37] = new_val;
-		black = 0;
+		black_r = new_val;
+		LITE_CONTROL_2[37] = max(0,min(255, black_r + black));
 		if (hijack == HIJACK_ENABLED)
 			mDNIe_Set_Mode(mdnie_tun_state.scenario);
 	}
-    return size;
+	return size;
 }
 
 static ssize_t black_green_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
-    return sprintf(buf, "%d\n", LITE_CONTROL_2[39]);
+	return sprintf(buf, "%d\n", black_g);
 }
 
 static ssize_t black_green_store(struct device * dev, struct device_attribute * attr, const char * buf, size_t size)
 {
-    int new_val;
+	int new_val;
 	sscanf(buf, "%d", &new_val);
 
-	if (new_val != LITE_CONTROL_2[39]) {
+	if (new_val != black_g) {
 		if (new_val < 0 || new_val > 255)
 			return -EINVAL;
 		DPRINT("new black_green: %d\n", new_val);
-		LITE_CONTROL_2[39] = new_val;
-		black = 0;
+		black_g = new_val;
+		LITE_CONTROL_2[39] = max(0,min(255, black_g + black));
 		if (hijack == HIJACK_ENABLED)
 			mDNIe_Set_Mode(mdnie_tun_state.scenario);
 	}
-    return size;
+	return size;
 }
 
 static ssize_t black_blue_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
-    return sprintf(buf, "%d\n", LITE_CONTROL_2[41]);
+	return sprintf(buf, "%d\n", max(0, black_b));
 }
 
 static ssize_t black_blue_store(struct device * dev, struct device_attribute * attr, const char * buf, size_t size)
 {
-    int new_val;
+	int new_val;
 	sscanf(buf, "%d", &new_val);
 
-	if (new_val != LITE_CONTROL_2[41]) {
+	if (new_val != black_b) {
 		if (new_val < 0 || new_val > 255)
 			return -EINVAL;
 		DPRINT("new black_blue: %d\n", new_val);
-		LITE_CONTROL_2[41] = new_val;
-		black = 0;
+		black_b = new_val;
+		LITE_CONTROL_2[41] = max(0,min(255, black_b + black));
 		if (hijack == HIJACK_ENABLED)
 			mDNIe_Set_Mode(mdnie_tun_state.scenario);
 	}
-    return size;
+	return size;
 }
 
 /* white */
 
 static ssize_t white_red_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
-    return sprintf(buf, "%d\n", LITE_CONTROL_2[36]);
+	return sprintf(buf, "%d\n", LITE_CONTROL_2[36]);
 }
 
 static ssize_t white_red_store(struct device * dev, struct device_attribute * attr, const char * buf, size_t size)
 {
-    int new_val;
+	int new_val;
 	sscanf(buf, "%d", &new_val);
 
 	if (new_val != LITE_CONTROL_2[36]) {
@@ -1448,17 +1456,17 @@ static ssize_t white_red_store(struct device * dev, struct device_attribute * at
 		if (hijack == HIJACK_ENABLED)
 			mDNIe_Set_Mode(mdnie_tun_state.scenario);
 	}
-    return size;
+	return size;
 }
 
 static ssize_t white_green_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
-    return sprintf(buf, "%d\n", LITE_CONTROL_2[38]);
+	return sprintf(buf, "%d\n", LITE_CONTROL_2[38]);
 }
 
 static ssize_t white_green_store(struct device * dev, struct device_attribute * attr, const char * buf, size_t size)
 {
-    int new_val;
+	int new_val;
 	sscanf(buf, "%d", &new_val);
 
 	if (new_val != LITE_CONTROL_2[38]) {
@@ -1469,17 +1477,17 @@ static ssize_t white_green_store(struct device * dev, struct device_attribute * 
 		if (hijack == HIJACK_ENABLED)
 			mDNIe_Set_Mode(mdnie_tun_state.scenario);
 	}
-    return size;
+	return size;
 }
 
 static ssize_t white_blue_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
-    return sprintf(buf, "%d\n", LITE_CONTROL_2[40]);
+	return sprintf(buf, "%d\n", LITE_CONTROL_2[40]);
 }
 
 static ssize_t white_blue_store(struct device * dev, struct device_attribute * attr, const char * buf, size_t size)
 {
-    int new_val;
+	int new_val;
 	sscanf(buf, "%d", &new_val);
 
 	if (new_val != LITE_CONTROL_2[40]) {
@@ -1490,7 +1498,7 @@ static ssize_t white_blue_store(struct device * dev, struct device_attribute * a
 		if (hijack == HIJACK_ENABLED)
 			mDNIe_Set_Mode(mdnie_tun_state.scenario);
 	}
-    return size;
+	return size;
 }
 
 static DEVICE_ATTR(hijack, 0664, hijack_show, hijack_store);
