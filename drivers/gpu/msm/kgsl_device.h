@@ -54,8 +54,6 @@
 
 #define KGSL_IS_PAGE_ALIGNED(addr) (!((addr) & (~PAGE_MASK)))
 
-#define KGSL_FLAG_WAKE_ON_TOUCH BIT(0)
-
 struct kgsl_device;
 struct platform_device;
 struct kgsl_device_private;

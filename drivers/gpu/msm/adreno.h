@@ -139,8 +139,6 @@ struct adreno_device {
 	unsigned int gpu_cycles;
 	struct kgsl_memdesc pwron_fixup;
 	unsigned int pwron_fixup_dwords;
-
-	struct work_struct input_work;
 };
 
 /**
