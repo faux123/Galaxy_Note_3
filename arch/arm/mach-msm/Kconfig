@@ -2281,7 +2281,7 @@ config CPU_VOLTAGE_TABLE
 	bool "Enable CPU Voltage Table via sysfs for adjustements"
 	default n
 	help
-	  Krait User Votlage Control
+	  Krait User Voltage Control
 
 config CPU_OVERCLOCK
 	bool "Enable CPU Overclocking option"
